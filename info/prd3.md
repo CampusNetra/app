@@ -1,15 +1,15 @@
-# CampusConnect – Faculty Platform PRD
+# CampurNetra – Faculty Platform PRD
 
 ## 1. Overview
 
-The Faculty Platform is a dedicated interface within CampusConnect designed to enable faculty members to efficiently communicate with students, share academic materials, manage class discussions, and broadcast academic announcements.
+The Faculty Platform is a dedicated interface within CampurNetra designed to enable faculty members to efficiently communicate with students, share academic materials, manage class discussions, and broadcast academic announcements.
 
 The platform replaces unstructured communication methods such as WhatsApp groups with structured communication channels aligned with academic hierarchies like branch, section, and subject.
 
 Faculty can access the system through:
 
-* **Mobile Application** – for quick announcements and communication
-* **Web Panel** – for academic management tasks such as assignments and content sharing
+- **Mobile Application** – for quick announcements and communication
+- **Web Panel** – for academic management tasks such as assignments and content sharing
 
 The design philosophy prioritizes **speed, simplicity, and minimal friction**, ensuring that faculty can perform common actions faster than existing messaging tools.
 
@@ -19,17 +19,17 @@ The design philosophy prioritizes **speed, simplicity, and minimal friction**, e
 
 ## Primary Goals
 
-* Provide faculty with a structured communication tool
-* Simplify distribution of assignments and academic materials
-* Enable faculty to communicate with multiple sections simultaneously
-* Improve visibility of academic announcements
-* Reduce dependency on external messaging platforms
+- Provide faculty with a structured communication tool
+- Simplify distribution of assignments and academic materials
+- Enable faculty to communicate with multiple sections simultaneously
+- Improve visibility of academic announcements
+- Reduce dependency on external messaging platforms
 
 ## Secondary Goals
 
-* Enable faculty to moderate subject discussions
-* Provide insights into student engagement
-* Provide future foundation for academic workflow tools
+- Enable faculty to moderate subject discussions
+- Provide insights into student engagement
+- Provide future foundation for academic workflow tools
 
 ---
 
@@ -41,10 +41,10 @@ Primary users responsible for teaching and communicating with students.
 
 Capabilities include:
 
-* Posting announcements
-* Uploading assignments and materials
-* Managing subject group chats
-* Viewing enrolled students
+- Posting announcements
+- Uploading assignments and materials
+- Managing subject group chats
+- Viewing enrolled students
 
 ## Admin
 
@@ -104,9 +104,9 @@ Faculty can post announcements to specific academic groups.
 
 Supported target scopes:
 
-* Subject group
-* Section group
-* Entire branch
+- Subject group
+- Section group
+- Entire branch
 
 ### Announcement Fields
 
@@ -124,8 +124,8 @@ Attachment: assignment3.pdf
 
 Announcements appear in:
 
-* Student feed
-* Subject chat (pinned)
+- Student feed
+- Subject chat (pinned)
 
 ---
 

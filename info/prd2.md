@@ -1,16 +1,16 @@
-# CampusConnect – Academic Lifecycle & Data Architecture PRD
+# CampurNetra – Academic Lifecycle & Data Architecture PRD
 
 ## 1. Document Purpose
 
-This document defines the **academic lifecycle model, data architecture, and operational workflows** for the CampusConnect platform.
+This document defines the **academic lifecycle model, data architecture, and operational workflows** for the CampurNetra platform.
 
 The purpose of this PRD is to ensure that the platform correctly models the **temporal nature of academic institutions**, including:
 
-* student progression across years and semesters
-* academic term management
-* subject offerings per semester
-* automatic channel management
-* graduation and alumni transitions
+- student progression across years and semesters
+- academic term management
+- subject offerings per semester
+- automatic channel management
+- graduation and alumni transitions
 
 Without this lifecycle modeling, the system would fail to handle real-world university operations such as promotions, semester changes, and alumni management.
 
@@ -38,7 +38,7 @@ Graduation
 Alumni
 ```
 
-CampusConnect must track these changes while preserving historical academic records.
+CampurNetra must track these changes while preserving historical academic records.
 
 ---
 
@@ -72,7 +72,7 @@ Subjects:
 
 Universities operate in **academic terms**, typically semesters.
 
-CampusConnect must support a flexible term system.
+CampurNetra must support a flexible term system.
 
 ### Academic Terms
 
@@ -111,9 +111,9 @@ MCA Batch 2025–2027
 
 This allows the system to track:
 
-* graduation timelines
-* alumni groups
-* academic progression
+- graduation timelines
+- alumni groups
+- academic progression
 
 ---
 
@@ -159,7 +159,7 @@ When a student becomes **alumni**, their access to certain channels is restricte
 
 # 7. Enrollment System
 
-Rather than storing academic information directly on the user record, CampusConnect maintains **enrollment records**.
+Rather than storing academic information directly on the user record, CampurNetra maintains **enrollment records**.
 
 This allows the system to track **historical academic data**.
 
@@ -248,7 +248,7 @@ Faculty: Dr Sharma
 
 # 10. Automatic Channel Creation
 
-CampusConnect automatically creates communication channels based on subject offerings.
+CampurNetra automatically creates communication channels based on subject offerings.
 
 Example:
 
@@ -266,8 +266,8 @@ DBMS – Section 4
 
 Members automatically added:
 
-* assigned faculty
-* all enrolled students
+- assigned faculty
+- all enrolled students
 
 ---
 
@@ -279,21 +279,21 @@ Channels update dynamically based on enrollment and status changes.
 
 Added to:
 
-* branch channel
-* section channel
-* subject channels
+- branch channel
+- section channel
+- subject channels
 
 ### When Student Graduates
 
 Removed from:
 
-* subject channels
-* section channels
+- subject channels
+- section channels
 
 May remain in:
 
-* branch announcements
-* alumni channels
+- branch announcements
+- alumni channels
 
 ---
 
@@ -350,12 +350,12 @@ Administrators must have tools to manage the academic lifecycle.
 
 ### Required Admin Operations
 
-* create academic term
-* import new batch of students
-* promote students to next semester
-* graduate batch
-* archive sections
-* assign faculty to subjects
+- create academic term
+- import new batch of students
+- promote students to next semester
+- graduate batch
+- archive sections
+- assign faculty to subjects
 
 ---
 
@@ -422,16 +422,16 @@ audit_logs
 
 This structure ensures:
 
-* academic history preservation
-* scalable channel management
-* flexible subject assignments
-* automated lifecycle management
+- academic history preservation
+- scalable channel management
+- flexible subject assignments
+- automated lifecycle management
 
 ---
 
 # 17. Future Lifecycle Features
 
-Future versions of CampusConnect may include:
+Future versions of CampurNetra may include:
 
 ### Timetable Management
 
@@ -475,13 +475,13 @@ The lifecycle system follows several core principles:
 
 # 19. Long-Term Vision
 
-The academic lifecycle model forms the foundation for transforming CampusConnect into a **complete campus operating system** capable of managing:
+The academic lifecycle model forms the foundation for transforming CampurNetra into a **complete campus operating system** capable of managing:
 
-* communication
-* academic workflows
-* student lifecycle
-* alumni engagement
-* institutional analytics
+- communication
+- academic workflows
+- student lifecycle
+- alumni engagement
+- institutional analytics
 
 ---
 

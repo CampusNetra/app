@@ -1,20 +1,20 @@
-# CampusConnect – Product Requirements Document (PRD)
+# CampurNetra – Product Requirements Document (PRD)
 
 ## 1. Product Overview
 
-CampusConnect is a structured campus communication platform designed to replace fragmented communication channels such as WhatsApp groups, Instagram announcements, and unofficial student chats used within universities.
+CampurNetra is a structured campus communication platform designed to replace fragmented communication channels such as WhatsApp groups, Instagram announcements, and unofficial student chats used within universities.
 
 The system provides a centralized platform where students, faculty, departments, and clubs can communicate efficiently using structured feeds, announcements, and organized group chats.
 
 The platform aims to solve the common problem of information fragmentation within universities where important updates are lost across multiple channels.
 
-CampusConnect provides:
+CampurNetra provides:
 
-* A unified campus announcement feed
-* Structured academic communication channels
-* Section-based and subject-based chat groups
-* Club updates and event notifications
-* Automated channel management based on student enrollment data
+- A unified campus announcement feed
+- Structured academic communication channels
+- Section-based and subject-based chat groups
+- Club updates and event notifications
+- Automated channel management based on student enrollment data
 
 The system will initially be deployed as a **Minimum Viable Product (MVP)** for a single department and later expanded to the entire university.
 
@@ -24,11 +24,11 @@ The system will initially be deployed as a **Minimum Viable Product (MVP)** for 
 
 Universities currently rely on unstructured communication methods such as:
 
-* WhatsApp groups for each subject
-* Separate WhatsApp groups for each section
-* Instagram pages for clubs
-* Informal student networks for information sharing
-* Notice boards for official announcements
+- WhatsApp groups for each subject
+- Separate WhatsApp groups for each section
+- Instagram pages for clubs
+- Informal student networks for information sharing
+- Notice boards for official announcements
 
 This leads to several issues:
 
@@ -48,7 +48,7 @@ Departments and clubs lack a unified official communication system.
 
 Many students remain unaware of events, workshops, and opportunities.
 
-CampusConnect aims to solve these problems by introducing structured communication infrastructure for the campus.
+CampurNetra aims to solve these problems by introducing structured communication infrastructure for the campus.
 
 ---
 
@@ -64,9 +64,9 @@ CampusConnect aims to solve these problems by introducing structured communicati
 
 ### Secondary Goals
 
-* Enable clubs to reach interested students
-* Improve student engagement with campus activities
-* Provide future foundation for a campus digital ecosystem
+- Enable clubs to reach interested students
+- Improve student engagement with campus activities
+- Provide future foundation for a campus digital ecosystem
 
 ---
 
@@ -96,11 +96,11 @@ Used by department administrators and IT staff to manage data and system configu
 
 Responsibilities:
 
-* Import student records
-* Import faculty records
-* Assign faculty to subjects and sections
-* Manage clubs
-* Monitor platform activity
+- Import student records
+- Import faculty records
+- Assign faculty to subjects and sections
+- Manage clubs
+- Monitor platform activity
 
 ---
 
@@ -110,10 +110,10 @@ Used by faculty members to communicate with students.
 
 Capabilities:
 
-* Post announcements
-* Upload assignments
-* Participate in subject group discussions
-* View student interactions
+- Post announcements
+- Upload assignments
+- Participate in subject group discussions
+- View student interactions
 
 ---
 
@@ -123,11 +123,11 @@ Primary user-facing platform for students.
 
 Features:
 
-* Personalized campus feed
-* Subject group chats
-* Section chat groups
-* Club updates
-* Event notifications
+- Personalized campus feed
+- Subject group chats
+- Section chat groups
+- Club updates
+- Event notifications
 
 ---
 
@@ -143,9 +143,9 @@ Official notices from administration.
 
 Examples:
 
-* Exam schedules
-* Academic calendar updates
-* Policy changes
+- Exam schedules
+- Academic calendar updates
+- Policy changes
 
 ### Faculty Posts
 
@@ -153,9 +153,9 @@ Subject-specific announcements and assignments.
 
 Examples:
 
-* Assignment uploads
-* Lecture material
-* Class schedule changes
+- Assignment uploads
+- Lecture material
+- Class schedule changes
 
 ### Club Posts
 
@@ -163,16 +163,16 @@ Updates from student clubs and organizations.
 
 Examples:
 
-* Event announcements
-* Workshops
-* Competitions
+- Event announcements
+- Workshops
+- Competitions
 
 Feed content is personalized based on:
 
-* Department
-* Section
-* Enrolled subjects
-* Followed clubs
+- Department
+- Section
+- Enrolled subjects
+- Followed clubs
 
 ---
 
@@ -188,9 +188,9 @@ MCA ALL
 
 Members:
 
-* All MCA students
-* Department faculty
-* Department heads
+- All MCA students
+- Department faculty
+- Department heads
 
 Purpose:
 Department-wide announcements and discussions.
@@ -208,9 +208,9 @@ MCA Section 4
 
 Members:
 
-* All students in the section
-* Class mentor
-* Class representative
+- All students in the section
+- Class mentor
+- Class representative
 
 Purpose:
 Section-level discussions and coordination.
@@ -225,8 +225,8 @@ DBMS – Section 4
 
 Members:
 
-* Subject faculty
-* Students enrolled in the subject
+- Subject faculty
+- Students enrolled in the subject
 
 Purpose:
 Academic discussion, assignment communication, clarifications.
@@ -286,9 +286,9 @@ Login Flow:
 
 Roles are automatically assigned:
 
-* Admin
-* Faculty
-* Student
+- Admin
+- Faculty
+- Student
 
 ---
 
@@ -370,11 +370,11 @@ Students cannot post to the main feed to prevent spam.
 
 Basic moderation measures include:
 
-* Identity-linked accounts
-* Reporting mechanism
-* Admin moderation dashboard
-* Content filtering
-* Permission-based posting
+- Identity-linked accounts
+- Reporting mechanism
+- Admin moderation dashboard
+- Content filtering
+- Permission-based posting
 
 ---
 
@@ -446,32 +446,32 @@ Integration with academic attendance systems.
 
 Future integration with services such as:
 
-* library systems
-* hostel management
-* transport updates
+- library systems
+- hostel management
+- transport updates
 
 ---
 
 # 14. Long-Term Vision
 
-CampusConnect aims to evolve into a **Campus Operating System** that digitizes and centralizes all student and faculty interactions within the university.
+CampurNetra aims to evolve into a **Campus Operating System** that digitizes and centralizes all student and faculty interactions within the university.
 
 Potential expansion includes:
 
-* multi-university deployments
-* campus analytics dashboards
-* academic resource platforms
-* institutional collaboration tools
+- multi-university deployments
+- campus analytics dashboards
+- academic resource platforms
+- institutional collaboration tools
 
 ---
 
 # 15. Success Metrics
 
-* Student adoption rate
-* Faculty engagement
-* Number of announcements delivered
-* Reduction in unofficial communication channels
-* Event participation increases
+- Student adoption rate
+- Faculty engagement
+- Number of announcements delivered
+- Reduction in unofficial communication channels
+- Event participation increases
 
 ---
 
