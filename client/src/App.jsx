@@ -5,6 +5,12 @@ import Signup from './modules/admin/Signup';
 import AdminLayout from './modules/admin/components/AdminLayout';
 import Dashboard from './modules/admin/Dashboard';
 import TermsPage from './modules/admin/TermsPage';
+import Welcome from './modules/admin/Welcome';
+import Platform from './modules/legal/Platform';
+import Resources from './modules/legal/Resources';
+import Support from './modules/legal/Support';
+import PrivacyPolicy from './modules/legal/PrivacyPolicy';
+import TermsOfService from './modules/legal/TermsOfService';
 import StudentsManagement from './modules/admin/StudentsManagement';
 import FacultyManagement from './modules/admin/FacultyManagement';
 import FacultyAssignment from './modules/admin/FacultyAssignment';
@@ -19,6 +25,7 @@ function App() {
       <Routes>
         <Route path="/admin/login" element={<Login />} />
         <Route path="/admin/signup" element={<Signup />} />
+        <Route path="/admin/welcome" element={<Welcome />} />
         
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<Dashboard />} />
@@ -30,6 +37,11 @@ function App() {
           <Route path="/admin/moderation" element={<ModerationDashboard />} />
           <Route path="/admin/analytics" element={<SystemAnalytics />} />
           <Route path="/admin/terms" element={<TermsPage />} />
+        <Route path="/platform" element={<Platform />} />
+        <Route path="/resources" element={<Resources />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
         </Route>
         
         <Route path="/" element={<Navigate to="/admin/login" />} />

@@ -53,7 +53,16 @@ const login = async (data) => {
 
   // 1. Find user
   const [users] = await pool.execute(
-    'SELECT id, name, password, role, dept_id FROM users WHERE email = ?',
+    `SELECT 
+      u.id,
+      u.name,
+      u.password,
+      u.role,
+      u.dept_id,
+      d.name AS dept_name
+    FROM users u
+    LEFT JOIN departments d ON d.id = u.dept_id
+    WHERE u.email = ?`,
     [email]
   );
 
@@ -87,6 +96,7 @@ const login = async (data) => {
       id: user.id,
       name: user.name,
       dept_id: user.dept_id,
+      dept_name: user.dept_name,
       role: user.role
     }
   };

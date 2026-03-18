@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -24,7 +24,7 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      await axios.post('/api/auth/signup', formData);
+      await api.post('/auth/signup', formData);
       navigate('/admin/login');
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
@@ -144,7 +144,7 @@ const Signup = () => {
                   {!loading && <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>}
                 </button>
               </div>
-              
+
               <div className="text-center pt-6">
                 <p className="text-sm text-slate-500">
                   Already have an account?{' '}
