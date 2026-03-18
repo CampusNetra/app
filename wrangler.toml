@@ -2,7 +2,7 @@
 name = "app"
 main = "server/src/worker.js" 
 compatibility_date = "2024-03-18"
-# compatibility_flags = [ "nodejs_compat" ]
+compatibility_flags = [ "nodejs_compat" ]
 
 [[d1_databases]]
 binding = "DB"
@@ -16,3 +16,8 @@ bucket = "./client/dist"
 [vars]
 NODE_VERSION = "20"
 VITE_API_URL = "/api"
+
+[build]
+# Mark Node-only modules as external to avoid build-time resolution errors
+# (Our db.js handles these dynamically in the local environment)
+external = ["mysql2/promise", "dotenv"]
