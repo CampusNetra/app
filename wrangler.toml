@@ -1,0 +1,21 @@
+# wrangler.toml - Cloudflare Configuration
+
+name = "campus-netra"
+compatibility_date = "2026-03-18"
+
+# Backend entry point
+main = "server/src/worker.js" 
+
+# Frontend Static Assets
+[site]
+bucket = "./client/dist"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "campus_netra"
+database_id = "0702e90d-bb0e-4046-8a99-1f9d7ef66ac7"
+
+[vars]
+NODE_VERSION = "20"
+VITE_API_URL = "/api"

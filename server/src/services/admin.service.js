@@ -27,7 +27,7 @@ const getDashboardStats = async (dept_id) => {
 
   // 5. Messages Today
   const [messages] = await pool.execute(
-    'SELECT COUNT(*) as count FROM messages WHERE DATE(created_at) = CURDATE()'
+    'SELECT COUNT(*) as count FROM messages WHERE date(created_at) = date("now")'
   );
 
   return {

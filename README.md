@@ -16,17 +16,16 @@ The file `database/campus_netra.sql` has been updated to be compatible with **bo
 - If using **MySQL**, import it as usual.
 
 #### 2. Frontend (Cloudflare Pages)
-- Connect this GitHub account.
+- **Repo**: Connect this GitHub repository.
 - **Root Directory**: Project root.
 - **Build Command**: `npm run build`
 - **Output Directory**: `client/dist`
-- **Environment Variable**: `VITE_API_URL` = (Your Backend URL)
+- **Env Variable**: `VITE_API_URL` = (Your Backend Worker URL)
 
-#### 3. Backend (Render/Railway)
-- Root Directory: `server`
-- Build Command: `npm install`
-- Start Command: `npm start`
-- Environment Variables required: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`.
+#### 3. Backend (Cloudflare Workers)
+- **Deployment**: Run `npx wrangler deploy` from the root.
+- **Requirement**: Set your D1 database ID in `wrangler.toml` first.
+- **Env Variables**: Set `JWT_SECRET` in the Cloudflare dashboard.
 
 ## 🛠️ Local Development
 ```bash
