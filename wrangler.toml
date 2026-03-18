@@ -10,8 +10,9 @@ database_name = "campus_netra"
 database_id = "0702e90d-bb0e-4046-8a99-1f9d7ef66ac7"
 preview_database_id = "0702e90d-bb0e-4046-8a99-1f9d7ef66ac7"
 
-[site]
-bucket = "./client/dist"
+[assets]
+directory = "./client/dist"
+binding = "ASSETS"
 
 [vars]
 NODE_VERSION = "22"

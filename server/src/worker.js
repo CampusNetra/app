@@ -1,5 +1,6 @@
 const authService = require('./services/auth.service');
 const adminService = require('./services/admin.service');
+const termsService = require('./services/terms.service');
 const jwt = require('jsonwebtoken');
 
 const jsonResponse = (data, status = 200) => {
@@ -36,9 +37,10 @@ export default {
         
         const url = new URL(request.url);
         const path = url.pathname;
+        const isApiRoute = path.startsWith('/api');
 
         // CORS Preflight
-        if (request.method === 'OPTIONS') {
+        if (request.method === 'OPTIONS' && isApiRoute) {
             return jsonResponse({});
         }
 
@@ -117,6 +119,51 @@ export default {
             }
         }
 
-        return new Response("CampusNetra API: Route Not Found", { status: 404 });
+        // --- TERMS ROUTES ---
+        if (path === '/api/terms' && request.method === 'GET') {
+            try {
+                const terms = await termsService.getAllTerms();
+                return jsonResponse(terms);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/terms' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const term = await termsService.createTerm(body);
+                return jsonResponse(term, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        const activateTermMatch = path.match(/^\/api\/terms\/(\d+)\/activate$/);
+        if (activateTermMatch && request.method === 'PATCH') {
+            try {
+                const result = await termsService.setActiveTerm(activateTermMatch[1]);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        if (isApiRoute) {
+            return jsonResponse({ error: 'Route Not Found' }, 404);
+        }
+
+        // Serve static assets and SPA routes for non-API paths.
+        if (env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+            const assetResponse = await env.ASSETS.fetch(request);
+            if (assetResponse.status !== 404) {
+                return assetResponse;
+            }
+
+            const indexRequest = new Request(new URL('/index.html', request.url), request);
+            return env.ASSETS.fetch(indexRequest);
+        }
+
+        return new Response('CampusNetra API is running. Use /api/* endpoints.', { status: 200 });
     },
 };
