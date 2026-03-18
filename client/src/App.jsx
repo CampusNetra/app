@@ -37,12 +37,13 @@ function App() {
           <Route path="/admin/moderation" element={<ModerationDashboard />} />
           <Route path="/admin/analytics" element={<SystemAnalytics />} />
           <Route path="/admin/terms" element={<TermsPage />} />
+        </Route>
+        
         <Route path="/platform" element={<Platform />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/support" element={<Support />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
-        </Route>
         
         <Route path="/" element={<Navigate to="/admin/login" />} />
       </Routes>
