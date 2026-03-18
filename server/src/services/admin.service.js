@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 const getDashboardStats = async (dept_id) => {
   // 1. Total Students
@@ -82,6 +83,280 @@ const getChannels = async (dept_id) => {
   return rows;
 };
 
+const getStudents = async ({
+  dept_id,
+  search = '',
+  section_id,
+  verification_status,
+  is_active,
+  page = 1,
+  limit = 20
+}) => {
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+  const offset = (safePage - 1) * safeLimit;
+
+  const whereClauses = ['u.role = ?', 'u.dept_id = ?'];
+  const params = ['student', dept_id];
+
+  if (search && search.trim()) {
+    const like = `%${search.trim()}%`;
+    whereClauses.push('(u.name LIKE ? OR u.email LIKE ? OR u.reg_no LIKE ? OR u.enrollment_no LIKE ?)');
+    params.push(like, like, like, like);
+  }
+
+  if (section_id) {
+    whereClauses.push('u.section_id = ?');
+    params.push(section_id);
+  }
+
+  if (verification_status) {
+    whereClauses.push('u.verification_status = ?');
+    params.push(verification_status);
+  }
+
+  if (is_active !== undefined && is_active !== null && is_active !== '') {
+    whereClauses.push('u.is_active = ?');
+    params.push(Number(is_active) ? 1 : 0);
+  }
+
+  const whereSql = whereClauses.join(' AND ');
+
+  const [students] = await pool.execute(
+    `SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.reg_no,
+      u.enrollment_no,
+      u.verification_status,
+      u.is_active,
+      u.created_at,
+      s.id AS section_id,
+      s.name AS section_name,
+      d.name AS dept_name
+    FROM users u
+    LEFT JOIN sections s ON s.id = u.section_id
+    LEFT JOIN departments d ON d.id = u.dept_id
+    WHERE ${whereSql}
+    ORDER BY u.created_at DESC
+    LIMIT ? OFFSET ?`,
+    [...params, safeLimit, offset]
+  );
+
+  const [countRows] = await pool.execute(
+    `SELECT COUNT(*) AS total
+    FROM users u
+    WHERE ${whereSql}`,
+    params
+  );
+
+  const [sections] = await pool.execute(
+    'SELECT id, name FROM sections WHERE dept_id = ? ORDER BY name ASC',
+    [dept_id]
+  );
+
+  const total = Number(countRows[0]?.total || 0);
+  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+
+  return {
+    students,
+    pagination: {
+      page: safePage,
+      limit: safeLimit,
+      total,
+      totalPages
+    },
+    filters: {
+      sections
+    }
+  };
+};
+
+const getFaculty = async ({
+  dept_id,
+  search = '',
+  is_active,
+  page = 1,
+  limit = 20
+}) => {
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+  const offset = (safePage - 1) * safeLimit;
+
+  const whereClauses = ['u.role = ?', 'u.dept_id = ?'];
+  const params = ['faculty', dept_id];
+
+  if (search && search.trim()) {
+    const like = `%${search.trim()}%`;
+    whereClauses.push('(u.name LIKE ? OR u.email LIKE ? OR u.reg_no LIKE ? OR u.enrollment_no LIKE ?)');
+    params.push(like, like, like, like);
+  }
+
+  if (is_active !== undefined && is_active !== null && is_active !== '') {
+    whereClauses.push('u.is_active = ?');
+    params.push(Number(is_active) ? 1 : 0);
+  }
+
+  const whereSql = whereClauses.join(' AND ');
+
+  const [facultyRows] = await pool.execute(
+    `SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.reg_no,
+      u.enrollment_no,
+      u.role,
+      u.verification_status,
+      u.is_active,
+      u.created_at,
+      d.name AS dept_name,
+      (
+        SELECT GROUP_CONCAT(DISTINCT s.name)
+        FROM subject_offerings so
+        JOIN subjects s ON s.id = so.subject_id
+        WHERE so.faculty_id = u.id
+      ) AS subjects_csv
+    FROM users u
+    LEFT JOIN departments d ON d.id = u.dept_id
+    WHERE ${whereSql}
+    ORDER BY u.created_at DESC
+    LIMIT ? OFFSET ?`,
+    [...params, safeLimit, offset]
+  );
+
+  const faculty = facultyRows.map((row) => ({
+    ...row,
+    subjects: row.subjects_csv
+      ? row.subjects_csv.split(',').map((item) => item.trim()).filter(Boolean)
+      : []
+  }));
+
+  const [countRows] = await pool.execute(
+    `SELECT COUNT(*) AS total
+     FROM users u
+     WHERE ${whereSql}`,
+    params
+  );
+
+  const total = Number(countRows[0]?.total || 0);
+  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+
+  return {
+    faculty,
+    pagination: {
+      page: safePage,
+      limit: safeLimit,
+      total,
+      totalPages
+    }
+  };
+};
+
+const createUserByRole = async ({ dept_id, role, data }) => {
+  const name = data?.name?.trim();
+  const email = data?.email?.trim()?.toLowerCase();
+  const password = data?.password;
+  const regNo = data?.reg_no?.trim() || null;
+  const enrollmentNo = data?.enrollment_no?.trim() || null;
+  const verificationStatus = data?.verification_status === 'verified' ? 'verified' : 'pending';
+  const isActive = Number(data?.is_active) === 0 ? 0 : 1;
+  const sectionId = data?.section_id ? Number(data.section_id) : null;
+
+  if (!name || !email || !password) {
+    throw new Error('name, email, and password are required');
+  }
+
+  const [existingEmail] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
+  if (existingEmail.length > 0) {
+    throw new Error('Email already exists');
+  }
+
+  if (regNo) {
+    const [existingReg] = await pool.execute('SELECT id FROM users WHERE reg_no = ?', [regNo]);
+    if (existingReg.length > 0) {
+      throw new Error('Registration number already exists');
+    }
+  }
+
+  if (enrollmentNo) {
+    const [existingEnrollment] = await pool.execute('SELECT id FROM users WHERE enrollment_no = ?', [enrollmentNo]);
+    if (existingEnrollment.length > 0) {
+      throw new Error('Enrollment number already exists');
+    }
+  }
+
+  if (role === 'student' && sectionId) {
+    const [sections] = await pool.execute(
+      'SELECT id FROM sections WHERE id = ? AND dept_id = ?',
+      [sectionId, dept_id]
+    );
+    if (sections.length === 0) {
+      throw new Error('Invalid section for this department');
+    }
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const [result] = await pool.execute(
+    `INSERT INTO users (
+      name,
+      email,
+      reg_no,
+      enrollment_no,
+      role,
+      dept_id,
+      section_id,
+      password,
+      verification_status,
+      is_active
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      name,
+      email,
+      regNo,
+      enrollmentNo,
+      role,
+      dept_id,
+      role === 'student' ? sectionId : null,
+      hashedPassword,
+      verificationStatus,
+      isActive
+    ]
+  );
+
+  const [rows] = await pool.execute(
+    `SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.reg_no,
+      u.enrollment_no,
+      u.role,
+      u.verification_status,
+      u.is_active,
+      u.created_at,
+      d.name AS dept_name,
+      s.name AS section_name
+    FROM users u
+    LEFT JOIN departments d ON d.id = u.dept_id
+    LEFT JOIN sections s ON s.id = u.section_id
+    WHERE u.id = ?`,
+    [result.insertId]
+  );
+
+  return rows[0];
+};
+
+const createStudent = async ({ dept_id, data }) => {
+  return createUserByRole({ dept_id, role: 'student', data });
+};
+
+const createFaculty = async ({ dept_id, data }) => {
+  return createUserByRole({ dept_id, role: 'faculty', data });
+};
+
 const createAnnouncement = async ({ sender_id, dept_id, channel_id, content }) => {
   // Verify channel belongs to department
   const [channels] = await pool.execute(
@@ -106,5 +381,9 @@ module.exports = {
   getRecentAnnouncements,
   getUserActivity,
   getChannels,
+  getStudents,
+  getFaculty,
+  createStudent,
+  createFaculty,
   createAnnouncement
 };

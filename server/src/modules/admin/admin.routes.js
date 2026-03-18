@@ -7,6 +7,10 @@ router.get('/stats', authMiddleware, adminController.getStats);
 router.get('/announcements', authMiddleware, adminController.getAnnouncements);
 router.get('/activity', authMiddleware, adminController.getActivity);
 router.get('/channels', authMiddleware, adminController.getChannels);
+router.get('/students', authMiddleware, adminController.getStudents);
+router.get('/faculty', authMiddleware, adminController.getFaculty);
+router.post('/students', authMiddleware, adminController.createStudent);
+router.post('/faculty', authMiddleware, adminController.createFaculty);
 router.post('/announcements', authMiddleware, adminController.createAnnouncement);
 
 module.exports = router;

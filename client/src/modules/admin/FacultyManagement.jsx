@@ -1,352 +1,423 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Plus,
+  RefreshCw,
+  Search,
+  User,
+  X,
+} from 'lucide-react';
+import api from '../../api';
+import AddUserModal from './components/AddUserModal';
 
 const FacultyManagement = () => {
   const [faculty, setFaculty] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [activeStatus, setActiveStatus] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [selectedFaculty, setSelectedFaculty] = useState(null);
+
+  const limit = 20;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1);
+      setSearch(searchInput.trim());
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     fetchFaculty();
-  }, []);
+  }, [search, activeStatus, page]);
+
+  useEffect(() => {
+    if (!selectedFaculty) return;
+
+    const freshSelection = faculty.find((member) => member.id === selectedFaculty.id);
+    if (freshSelection) {
+      setSelectedFaculty(freshSelection);
+    } else {
+      setSelectedFaculty(null);
+    }
+  }, [faculty, selectedFaculty]);
 
   const fetchFaculty = async () => {
+    setLoading(true);
+    setError('');
+
+    const params = {
+      page,
+      limit,
+      search: search || undefined,
+      is_active:
+        activeStatus === '' ? undefined : activeStatus === 'active' ? 1 : 0,
+    };
+
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('/api/admin/faculty', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFaculty(res.data);
+      const res = await api.get('/admin/faculty', { params });
+      setFaculty(res.data?.faculty || []);
+      setTotal(Number(res.data?.pagination?.total || 0));
+      setTotalPages(Number(res.data?.pagination?.totalPages || 1));
     } catch (err) {
       console.error('Error fetching faculty:', err);
-      setFaculty([
-        {
-          id: 1,
-          faculty_id: '#FAC-2931',
-          name: 'Dr. Robert Fischer',
-          email: 'robert.f@campus.edu',
-          department: 'Computer Science',
-          subjects: ['AI/ML', 'Data Science'],
-          status: 'Active',
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCc-cd3nwtlUU4jfBDpi1bU-KE7VaReanImzkzjQYyJAnP4xRljnw_uXZYF0xbxe3USMCvnB-dCKhW9pyzHVPKE2hmcP8c4RnHzCGmu3z4w55TDd_LZhnbltWrJv1xPNdVNO7WhWEe2Af55Qo6ZCxtEktziYanoOE-dgjzumoj49zdWzFRfyTcDdpbNXsp1ocWS2H-lCA0q8I8ceb0fhafL1OPeKJsCg1lutjzHPbRiUTcI2vyL4Kh9Zr3nMwxoLEWRHmDDFvaAcBQ',
-          phone: '+1 (555) 123-4567',
-          office: 'Science Block B, Room 204'
-        },
-        {
-          id: 2,
-          faculty_id: '#FAC-2940',
-          name: 'Dr. Elena Rodriguez',
-          email: 'elena.rod@campus.edu',
-          department: 'Mathematics',
-          subjects: ['Calculus', 'Linear Algebra'],
-          status: 'Active',
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAdaqqsYZg2iiJgNtvQWGpk2d06Oyt4mVDwoZS1I9Ln030J4zBX43rHxMEkiBOCkWTqyrigTvk-SDVx2i5CDut5kDmYGoocQXf8PA8jST2Xhtn6YuReLBVtRLHmNi1dX-qChEp24OMgUHzBEvV3eBSCXO_BeWrXHt0dB7zMJnFSIypJd6gwWO33_Dmb58nPZHX9_Cjn3-bpYvye28vnFzAley4hkvmqVFrIupV-3mJdkOPIBMnreV7Rb32HazECGWJu2eyKM8rxf68',
-          phone: '+1 (555) 234-8910',
-          office: 'Science Block A, Room 402'
-        },
-        {
-          id: 3,
-          faculty_id: '#FAC-3012',
-          name: 'Prof. James Sterling',
-          email: 'j.sterling@campus.edu',
-          department: 'Physics',
-          subjects: ['Quantum Mech'],
-          status: 'On Leave',
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCMXaKhSB30RniOecA0lEo7uUPPNp8OWUh3RQ6H0cgGNJQY87Swoxlq3IKBI93KZWRD16jnpvJtDYuWQTwXmqoXrbx1OseViz7zMzPxAcX36yNldvvF2nqBTNxz42ZAM8jukJCk8EKUEZwIWh5peAX9TIgiIV_CDKWHNQ9UV2MD7xCliApFR2krmdVdVnvJpBvUG9-bettuYPO9VcL_xDOQf30ThkuwZmvM1z0gp692SenD8kmo7m5z3O3bducl8VwVJ8l5YlCYmn8',
-          phone: '+1 (555) 345-6789',
-          office: 'Engineering Wing, Room 105'
-        },
-        {
-          id: 4,
-          faculty_id: '#FAC-3105',
-          name: 'Dr. Linda Chen',
-          email: 'linda.chen@campus.edu',
-          department: 'Computer Science',
-          subjects: ['Cybersecurity'],
-          status: 'Active',
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA54EwkgrkpKyAxv56eaKY-BEXqX-1szVd4hTIhBqz5QW7RgV9c2PrFi2ML6Cz3WdIpHkFc_XUuO9HXwMK4ksWyQmsvAggf7CgSHxDT5xg8mSgKFq_ahwY5Bwh42pS318GImpZ-kxpw7GN34jw3Z_XcXLvXoVAsc8TryMVJqWpxM2akHGZn0j-bRcvJ14ySSIrYfgIbernSCxlIhm8OaGTmaD2eK4s82_cWwOsUPGVSUuCP1nC8mO1QS0WGUW98hvSEn8P95rwywPI',
-          phone: '+1 (555) 456-7890',
-          office: 'Cyber Lab, Room 301'
-        }
-      ]);
+      setError(err.response?.data?.error || 'Failed to load faculty');
+      setFaculty([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
-          </span>
-        );
-      case 'on leave':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> On Leave
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span> {status}
-          </span>
-        );
+  const resetFilters = () => {
+    setSearchInput('');
+    setSearch('');
+    setActiveStatus('');
+    setPage(1);
+  };
+
+  const openAddModal = () => {
+    setCreateError('');
+    setIsAddModalOpen(true);
+  };
+
+  const handleCreateFaculty = async (payload) => {
+    setCreatingUser(true);
+    setCreateError('');
+    try {
+      await api.post('/admin/faculty', payload);
+      setIsAddModalOpen(false);
+      await fetchFaculty();
+    } catch (err) {
+      console.error('Error creating faculty:', err);
+      setCreateError(err.response?.data?.error || 'Failed to create faculty');
+    } finally {
+      setCreatingUser(false);
     }
   };
 
+  const rangeLabel = useMemo(() => {
+    if (total === 0) return '0 to 0';
+    const start = (page - 1) * limit + 1;
+    const end = Math.min(page * limit, total);
+    return `${start} to ${end}`;
+  }, [page, total]);
+
+  const getFacultyCode = (member) => {
+    if (member.reg_no) return member.reg_no;
+    if (member.enrollment_no) return member.enrollment_no;
+    return `FAC-${String(member.id).padStart(4, '0')}`;
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'FA';
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
+  const formatDate = (value) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString(undefined, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  const getStatusBadge = (isActive) => {
+    if (Number(isActive) === 1) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Active
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" /> Disabled
+      </span>
+    );
+  };
+
   return (
-    <div className="flex-1 overflow-hidden flex relative bg-background-light">
-      <div className="flex-1 overflow-auto p-8 custom-scrollbar">
-        <div className="flex flex-col gap-6 max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">Faculty</h2>
-              <p className="text-slate-500 text-sm mt-1">Manage, filter, and monitor all university staff members.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2 border border-slate-200 bg-white text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">file_download</span> Import CSV
-              </button>
-              <button className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm shadow-primary/20">
-                <span className="material-symbols-outlined text-lg">add</span> Add Faculty
-              </button>
-            </div>
-          </div>
+    <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-background-light relative">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Faculty</h1>
+          <p className="text-slate-500 mt-1">Directory from department records with active status and subject assignments.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={openAddModal}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#e53935] hover:bg-[#d32f2f] text-white text-sm font-semibold transition-colors"
+          >
+            <Plus size={16} />
+            Add Faculty
+          </button>
+          <button
+            type="button"
+            onClick={fetchFaculty}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+          >
+            <RefreshCw size={16} />
+            Refresh
+          </button>
+        </div>
+      </div>
 
-          {/* Table Toolbar */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center shadow-sm">
-            <div className="relative flex-1 w-full">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-              <input 
-                type="text" 
-                placeholder="Filter by name or ID..." 
-                className="w-full bg-transparent border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:border-primary transition-all outline-none"
-              />
-            </div>
-            <select className="bg-transparent border-slate-200 rounded-lg py-2 pl-4 pr-10 text-sm focus:border-primary transition-all outline-none w-full md:w-auto">
-              <option>All Departments</option>
-              <option>Computer Science</option>
-              <option>Mathematics</option>
-              <option>Physics</option>
-              <option>Humanities</option>
-            </select>
-            <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hidden md:block">
-              <span className="material-symbols-outlined">filter_list</span>
-            </button>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="relative">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name, email, ID..."
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+          />
+        </div>
 
-          {/* Data Table */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-4">Faculty ID</th>
-                    <th className="px-6 py-4">Name</th>
-                    <th className="px-6 py-4">Department</th>
-                    <th className="px-6 py-4">Subjects</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="6" className="text-center py-8">
-                        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
-                      </td>
-                    </tr>
-                  ) : faculty.length > 0 ? (
-                    faculty.map((member, idx) => (
-                      <tr 
-                        key={idx} 
+        <select
+          value={activeStatus}
+          onChange={(e) => {
+            setPage(1);
+            setActiveStatus(e.target.value);
+          }}
+          className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+        >
+          <option value="">All Access</option>
+          <option value="active">Active</option>
+          <option value="disabled">Disabled</option>
+        </select>
+
+        <button
+          type="button"
+          onClick={resetFilters}
+          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
+        >
+          Reset Filters
+        </button>
+      </div>
+
+      {error ? (
+        <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-sm font-medium text-red-600">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-200">
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Faculty ID</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Department</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Subjects</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Access</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-8">
+                    <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
+                  </td>
+                </tr>
+              ) : faculty.length > 0 ? (
+                faculty.map((member) => (
+                  <tr key={member.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-mono text-slate-700">{getFacultyCode(member)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-500">
+                          {getInitials(member.name)}
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-slate-900 block">{member.name}</span>
+                          <span className="text-xs text-slate-500">{member.email || '-'}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{member.dept_name || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {member.subjects?.length ? (
+                        <div className="flex flex-wrap gap-1">
+                          {member.subjects.slice(0, 2).map((subject, idx) => (
+                            <span key={`${member.id}-${idx}`} className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-semibold text-slate-700">
+                              {subject}
+                            </span>
+                          ))}
+                          {member.subjects.length > 2 ? (
+                            <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-semibold text-slate-700">
+                              +{member.subjects.length - 2}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm">{getStatusBadge(member.is_active)}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{formatDate(member.created_at)}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        type="button"
                         onClick={() => setSelectedFaculty(member)}
-                        className="hover:bg-slate-50/50 cursor-pointer transition-colors group"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                       >
-                        <td className="px-6 py-4 font-medium text-slate-500">{member.faculty_id}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 overflow-hidden flex-shrink-0">
-                              {member.avatar ? (
-                                <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-500">
-                                  {member.name?.charAt(0)}
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-bold text-slate-900">{member.name}</p>
-                              <p className="text-[11px] text-slate-400">{member.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-slate-700">{member.department}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {member.subjects?.map((sub, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-semibold text-slate-700">
-                                {sub}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          {getStatusBadge(member.status)}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button className="p-1 hover:bg-slate-200 rounded transition-colors group relative inline-flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                            <span className="material-symbols-outlined text-slate-400">more_horiz</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="text-center py-8 text-slate-500">No faculty found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Pagination */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-              <p className="text-xs text-slate-500">Showing 1 to {faculty.length} of {faculty.length} results</p>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1 text-xs border border-slate-200 rounded-md hover:bg-white transition-colors disabled:opacity-50" disabled>Previous</button>
-                <button className="px-3 py-1 text-xs border border-slate-200 rounded-md bg-white shadow-sm font-bold text-slate-900">1</button>
-                <button className="px-3 py-1 text-xs border border-slate-200 rounded-md hover:bg-white transition-colors disabled:opacity-50" disabled>Next</button>
-              </div>
-            </div>
+                        <Eye size={14} />
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="text-center py-8 text-slate-500">No faculty found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="px-6 py-4 flex items-center justify-between border-t border-slate-200 bg-slate-50/30">
+          <p className="text-sm text-slate-500">
+            Showing <span className="font-medium text-slate-900">{rangeLabel}</span> of{' '}
+            <span className="font-medium text-slate-900">{total}</span> faculty members
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="px-3 py-1 bg-primary text-white text-sm font-bold rounded-lg">{page}</span>
+            <button
+              type="button"
+              className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+              disabled={page >= totalPages || loading}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Faculty Details Side Panel (Drawer) */}
-      <div 
-        className={`absolute inset-y-0 right-0 w-[400px] bg-white border-l border-slate-200 shadow-2xl flex flex-col z-50 transform transition-transform duration-300 ${
+      <div
+        className={`fixed inset-y-0 right-0 w-[390px] max-w-[92vw] bg-white border-l border-slate-200 shadow-2xl z-[1200] transform transition-transform duration-300 ${
           selectedFaculty ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {selectedFaculty && (
-          <>
-            {/* Panel Header */}
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 overflow-hidden ring-4 ring-orange-50">
-                  {selectedFaculty.avatar ? (
-                    <img src={selectedFaculty.avatar} alt={selectedFaculty.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-lg font-bold text-slate-500">
-                      {selectedFaculty.name?.charAt(0)}
-                    </div>
-                  )}
+        {selectedFaculty ? (
+          <div className="h-full flex flex-col">
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  {getInitials(selectedFaculty.name)}
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">{selectedFaculty.name}</h3>
-                  <p className="text-xs font-semibold text-primary uppercase tracking-wider">{selectedFaculty.department}</p>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-slate-900 truncate">{selectedFaculty.name}</h3>
+                  <p className="text-xs text-slate-500 truncate">{selectedFaculty.email || '-'}</p>
                 </div>
               </div>
-              <button 
-                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+              <button
+                type="button"
                 onClick={() => setSelectedFaculty(null)}
+                className="h-9 w-9 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 flex items-center justify-center"
               >
-                <span className="material-symbols-outlined text-slate-400">close</span>
+                <X size={16} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-              {/* Status & Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Status</p>
-                  <p className="text-sm font-bold text-green-600 flex items-center justify-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span> {selectedFaculty.status}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Faculty ID</p>
+                  <p className="text-sm font-semibold text-slate-900 mt-1">{getFacultyCode(selectedFaculty)}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Role</p>
+                  <p className="text-sm font-semibold text-slate-900 mt-1">{selectedFaculty.role || 'faculty'}</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-200">
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-3">Details</p>
+                <div className="space-y-3 text-sm">
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-900">Department:</span> {selectedFaculty.dept_name || '-'}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-900">Verification:</span> {selectedFaculty.verification_status || '-'}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-900">Access:</span> {Number(selectedFaculty.is_active) === 1 ? 'Active' : 'Disabled'}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-900">Joined:</span> {formatDate(selectedFaculty.created_at)}
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Emp. Type</p>
-                  <p className="text-sm font-bold text-slate-900">Full Time</p>
-                </div>
               </div>
 
-              {/* Contact Details */}
-              <section>
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Contact & Location</h4>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-400 text-lg">mail</span>
-                    <div>
-                      <p className="text-xs text-slate-500">Email Address</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedFaculty.email}</p>
-                    </div>
+              <div className="p-4 rounded-xl border border-slate-200">
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-3">Assigned Subjects</p>
+                {selectedFaculty.subjects?.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFaculty.subjects.map((subject, idx) => (
+                      <span key={`${selectedFaculty.id}-sub-${idx}`} className="px-2.5 py-1 rounded-lg bg-slate-100 text-xs font-semibold text-slate-700">
+                        {subject}
+                      </span>
+                    ))}
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-400 text-lg">call</span>
-                    <div>
-                      <p className="text-xs text-slate-500">Phone Number</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedFaculty.phone || '+1 (555) 000-0000'}</p>
-                    </div>
+                ) : (
+                  <div className="text-sm text-slate-500 flex items-center gap-2">
+                    <User size={14} />
+                    No subjects assigned
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-400 text-lg">location_on</span>
-                    <div>
-                      <p className="text-xs text-slate-500">Office Location</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedFaculty.office || 'TBD'}</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Academic Assignments */}
-              <section>
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Assignments</h4>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 mb-2">Current Subjects</p>
-                    <div className="space-y-2">
-                      {selectedFaculty.subjects?.map((sub, i) => (
-                        <div key={i} className="p-3 bg-white border border-slate-100 rounded-lg flex items-center justify-between shadow-sm">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
-                              <span className="material-symbols-outlined text-sm text-slate-500">book</span>
-                            </div>
-                            <p className="text-sm font-medium text-slate-900">{sub}</p>
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">{sub.substring(0,4)}-101</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </section>
+                )}
+              </div>
             </div>
-
-            {/* Panel Actions */}
-            <div className="p-6 border-t border-slate-200 flex gap-3">
-              <button className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                Edit Details
-              </button>
-              <button className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors">
-                Message
-              </button>
-            </div>
-          </>
-        )}
+          </div>
+        ) : null}
       </div>
-      
-      {/* Overlay to close drawer when clicking outside (visible only on mobile) */}
-      {selectedFaculty && (
-        <div 
-          className="fixed inset-0 bg-slate-900/20 z-40 md:hidden"
-          onClick={() => setSelectedFaculty(null)}
-        />
-      )}
+
+      {selectedFaculty ? (
+        <div className="fixed inset-0 bg-slate-900/20 z-[1100]" onClick={() => setSelectedFaculty(null)} />
+      ) : null}
+
+      <AddUserModal
+        isOpen={isAddModalOpen}
+        role="faculty"
+        loading={creatingUser}
+        error={createError}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleCreateFaculty}
+      />
     </div>
   );
 };

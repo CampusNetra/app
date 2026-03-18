@@ -56,6 +56,7 @@ const login = async (data) => {
     `SELECT 
       u.id,
       u.name,
+      u.email,
       u.password,
       u.role,
       u.dept_id,
@@ -95,6 +96,7 @@ const login = async (data) => {
     user: {
       id: user.id,
       name: user.name,
+      email: user.email,
       dept_id: user.dept_id,
       dept_name: user.dept_name,
       role: user.role
