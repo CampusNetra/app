@@ -1,25 +1,20 @@
+let nodePool = null;
 
-let pool;
+const getD1Binding = () => {
+  if (typeof globalThis !== 'undefined' && globalThis.DB) {
+    return globalThis.DB;
+  }
+  return null;
+};
 
-// Detection for Cloudflare Environment (e.g. D1 binding 'DB' exists globally)
-if (typeof globalThis.DB !== 'undefined' || typeof process.env.DB !== 'undefined') {
-  const d1 = globalThis.DB || process.env.DB;
-  
-  // Shim for D1 to match mysql2/promise .execute behavior
-  pool = {
-    execute: async (sql, params = []) => {
-      // D1 uses '?' for placeholders, same as mysql2
-      const result = await d1.prepare(sql).bind(...params).all();
-      // Result structure: { success: true, results: [...], meta: {...} }
-      return [result.results, result.meta];
-    }
-  };
-} else {
-  // Local MySQL Setup (Requires only in Node environment)
-  const mysql = require('mysql2/promise');
-  require('dotenv').config();
-  
-  pool = mysql.createPool({
+const getNodePool = () => {
+  if (nodePool) return nodePool;
+
+  const nodeRequire = eval('require');
+  const mysql = nodeRequire('mysql2/promise');
+  nodeRequire('dotenv').config();
+
+  nodePool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'admin',
@@ -29,6 +24,39 @@ if (typeof globalThis.DB !== 'undefined' || typeof process.env.DB !== 'undefined
     queueLimit: 0,
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : null
   });
-}
 
-module.exports = pool;
+  return nodePool;
+};
+
+const executeOnD1 = async (sql, params = []) => {
+  const d1 = getD1Binding();
+  if (!d1) {
+    throw new Error('D1 binding not found');
+  }
+
+  const prepared = d1.prepare(sql);
+  const statement = params.length ? prepared.bind(...params) : prepared;
+  const result = await statement.all();
+  const meta = result.meta || {};
+
+  return [
+    result.results || [],
+    {
+      ...meta,
+      insertId: meta.last_row_id,
+      affectedRows: meta.changes
+    }
+  ];
+};
+
+const execute = async (sql, params = []) => {
+  if (getD1Binding()) {
+    return executeOnD1(sql, params);
+  }
+
+  return getNodePool().execute(sql, params);
+};
+
+module.exports = {
+  execute
+};

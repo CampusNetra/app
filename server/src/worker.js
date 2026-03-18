@@ -31,6 +31,8 @@ export default {
     async fetch(request, env, ctx) {
         // Expose DB binding globally
         globalThis.DB = env.DB;
+        globalThis.JWT_SECRET = env.JWT_SECRET || 'campus_netra_secret_key_123';
+        globalThis.JWT_EXPIRE = env.JWT_EXPIRE || '1d';
         
         const url = new URL(request.url);
         const path = url.pathname;
@@ -54,8 +56,6 @@ export default {
         if (path === '/api/auth/login' && request.method === 'POST') {
             const body = await request.json();
             try {
-                // Ensure JWT_SECRET is available from env
-                process.env.JWT_SECRET = env.JWT_SECRET || 'campus_netra_secret_key_123';
                 const result = await authService.login(body);
                 return jsonResponse(result);
             } catch (e) {

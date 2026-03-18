@@ -2,6 +2,20 @@ const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const getJwtSecret = () => {
+  if (typeof globalThis !== 'undefined' && globalThis.JWT_SECRET) {
+    return globalThis.JWT_SECRET;
+  }
+  return process.env.JWT_SECRET || 'campus_netra_secret_key_123';
+};
+
+const getJwtExpire = () => {
+  if (typeof globalThis !== 'undefined' && globalThis.JWT_EXPIRE) {
+    return globalThis.JWT_EXPIRE;
+  }
+  return process.env.JWT_EXPIRE || '1d';
+};
+
 const signup = async (data) => {
   const { name, email, password, dept_name } = data;
 
@@ -63,8 +77,8 @@ const login = async (data) => {
   // 4. Generate JWT
   const token = jwt.sign(
     { id: user.id, role: user.role, dept_id: user.dept_id },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE }
+    getJwtSecret(),
+    { expiresIn: getJwtExpire() }
   );
 
   return {
