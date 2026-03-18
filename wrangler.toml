@@ -2,7 +2,7 @@
 
 name = "app"
 compatibility_date = "2026-03-18"
-node_compat = true
+compatibility_flags = [ "nodejs_compat" ]
 
 # Backend entry point
 main = "server/src/worker.js" 
