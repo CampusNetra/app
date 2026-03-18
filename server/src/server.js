@@ -19,3 +19,5 @@ server.listen(PORT, () => {
 // Socket logic will be imported here later
 // const registerChatHandlers = require('./sockets/chat.socket');
 // io.on('connection', (socket) => registerChatHandlers(socket, io));
+
+// Restart server

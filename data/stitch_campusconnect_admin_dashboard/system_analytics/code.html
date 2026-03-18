@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CampusConnect Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .chart-gradient { fill: url(#chart-gradient); }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col sticky top-0 h-screen">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">hub</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-sm font-bold leading-none">CampusConnect</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400">Admin Console</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+                    Analytics
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+                    Users
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+                    Messages
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+                    Announcements
+                </a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                    Settings
+                </a>
+<div class="mt-4 flex items-center gap-3 px-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+<img alt="Admin avatar" data-alt="Minimalist profile avatar for admin user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxgueu-J3d08Bq0jQmDp9g_Ww9gowAQSinHMH9DMDAoJ3w9tjWsxsoFwZhUumiTutYZok3uuHl6QajLNT2eroJpjVjLgHpTL2AJ1WYYrVf-0DRF7dBHLVv_Igv65xIjtRnKk2fAemT3yy6wtCcPXYZFe2F5StebWx8Kf9zwzpjNF5f4mJFTQ9zWD-UHxdhkwMzkRoBqewLqaxTfqdlO_R-1fCtl7czlve7RDsoY7vOv8co8U2bDPusKjXCodSVwrqkYJIPL6q7ASo"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-semibold truncate">Alex Rivera</p>
+<p class="text-[10px] text-slate-500 truncate">System Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-10 px-8 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h2 class="text-sm font-medium text-slate-500 dark:text-slate-400">Dashboard</h2>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-700">chevron_right</span>
+<h2 class="text-sm font-semibold">Analytics</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+<input class="h-9 w-64 pl-10 pr-4 text-sm bg-slate-100 dark:bg-slate-900 border-none rounded-full focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Search data..." type="text"/>
+</div>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-900 relative">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-slate-950"></span>
+</button>
+</div>
+</header>
+<div class="p-8 max-w-7xl mx-auto space-y-8">
+<!-- Title Section -->
+<div class="flex items-end justify-between">
+<div>
+<h3 class="text-2xl font-bold tracking-tight">System Analytics</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Real-time performance metrics across the campus network.</p>
+</div>
+<div class="flex items-center gap-2 bg-white dark:bg-slate-950 p-1 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
+<button class="px-3 py-1.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900 rounded-md">Last 7 days</button>
+<button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 rounded-md">30 days</button>
+<button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 rounded-md">90 days</button>
+</div>
+</div>
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Users</p>
+<span class="material-symbols-outlined text-slate-400">groups</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<h4 class="text-2xl font-bold">12,482</h4>
+<span class="text-xs font-medium text-emerald-500 flex items-center">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                12%
+                            </span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Daily Active</p>
+<span class="material-symbols-outlined text-slate-400">bolt</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<h4 class="text-2xl font-bold">8,210</h4>
+<span class="text-xs font-medium text-emerald-500 flex items-center">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                4.3%
+                            </span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Club Events</p>
+<span class="material-symbols-outlined text-slate-400">event</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<h4 class="text-2xl font-bold">156</h4>
+<span class="text-xs font-medium text-emerald-500 flex items-center">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                18%
+                            </span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Reach</p>
+<span class="material-symbols-outlined text-slate-400">visibility</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<h4 class="text-2xl font-bold">45.2k</h4>
+<span class="text-xs font-medium text-rose-500 flex items-center">
+<span class="material-symbols-outlined text-[14px]">trending_down</span>
+                                2.1%
+                            </span>
+</div>
+</div>
+</div>
+<!-- Main Charts Row 1 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Daily Active Users - Line Chart -->
+<div class="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h5 class="font-bold text-sm">Daily Active Users (DAU)</h5>
+<p class="text-xs text-slate-500">Peak activity usually occurs on Wednesdays</p>
+</div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<div class="flex-1 min-h-[240px] flex flex-col justify-between">
+<svg class="w-full h-48 overflow-visible" preserveaspectratio="none" viewbox="0 0 400 100">
+<defs>
+<lineargradient id="chart-gradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ec5b13" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#ec5b13" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Area -->
+<path class="chart-gradient" d="M0,80 C20,70 40,90 60,60 C80,30 100,40 120,20 C140,0 160,50 180,40 C200,30 220,70 240,65 C260,60 280,30 300,40 C320,50 340,10 360,20 C380,30 400,20 400,20 L400,100 L0,100 Z"></path>
+<!-- Line -->
+<path d="M0,80 C20,70 40,90 60,60 C80,30 100,40 120,20 C140,0 160,50 180,40 C200,30 220,70 240,65 C260,60 280,30 300,40 C320,50 340,10 360,20 C380,30 400,20 400,20" fill="none" stroke="#ec5b13" stroke-width="2.5"></path>
+</svg>
+<div class="flex justify-between mt-4 px-2">
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mon</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tue</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Wed</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Thu</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Fri</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sat</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sun</span>
+</div>
+</div>
+</div>
+<!-- Messages Sent - Bar Chart -->
+<div class="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h5 class="font-bold text-sm">Messages Sent</h5>
+<p class="text-xs text-slate-500">Volume of student interactions per day</p>
+</div>
+<div class="flex gap-2">
+<div class="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-900 rounded text-[10px] font-bold">
+<span class="size-1.5 rounded-full bg-primary"></span> Direct
+                                </div>
+<div class="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-900 rounded text-[10px] font-bold">
+<span class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></span> Group
+                                </div>
+</div>
+</div>
+<div class="flex-1 min-h-[240px] flex items-end justify-between gap-4 px-2">
+<div class="flex flex-col flex-1 items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-md relative group h-24">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-md h-[60%]"></div>
+</div>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Mon</span>
+</div>
+<div class="flex flex-col flex-1 items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-md relative group h-32">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-md h-[80%]"></div>
+</div>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Tue</span>
+</div>
+<div class="flex flex-col flex-1 items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-md relative group h-40">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-md h-[95%]"></div>
+</div>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Wed</span>
+</div>
+<div class="flex flex-col flex-1 items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-md relative group h-36">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-md h-[75%]"></div>
+</div>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Thu</span>
+</div>
+<div class="flex flex-col flex-1 items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-md relative group h-28">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-md h-[40%]"></div>
+</div>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Fri</span>
+</div>
+<div class="flex flex-col flex-1 items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-md relative group h-16">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-md h-[20%]"></div>
+</div>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Sat</span>
+</div>
+<div class="flex flex-col flex-1 items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-md relative group h-12">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-md h-[15%]"></div>
+</div>
+<span class="text-[10px] text-slate-400 font-bold uppercase">Sun</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Second Row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Club Engagement - Donut Chart -->
+<div class="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex flex-col mb-8">
+<h5 class="font-bold text-sm">Engagement by Club Type</h5>
+<p class="text-xs text-slate-500">Distribution of active memberships</p>
+</div>
+<div class="flex flex-col items-center">
+<div class="relative size-40">
+<svg class="size-full -rotate-90" viewbox="0 0 36 36">
+<circle class="stroke-slate-100 dark:stroke-slate-800" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="75, 100" stroke-linecap="round" stroke-width="3"></circle>
+<circle class="stroke-slate-400 dark:stroke-slate-600" cx="18" cy="18" fill="none" r="16" stroke-dasharray="15, 100" stroke-dashoffset="-75" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-xl font-bold">128</span>
+<span class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Total Clubs</span>
+</div>
+</div>
+<div class="w-full mt-8 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-primary"></span>
+<span class="text-xs font-medium">Academic</span>
+</div>
+<span class="text-xs text-slate-500">45%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-slate-400"></span>
+<span class="text-xs font-medium">Sports</span>
+</div>
+<span class="text-xs text-slate-500">30%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-slate-200"></span>
+<span class="text-xs font-medium">Arts &amp; Culture</span>
+</div>
+<span class="text-xs text-slate-500">25%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Announcements Posted - Feed Style -->
+<div class="lg:col-span-2 bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h5 class="font-bold text-sm">Recent Announcements</h5>
+<p class="text-xs text-slate-500">Reach and impact of campus-wide updates</p>
+</div>
+<button class="text-xs font-semibold text-primary hover:underline">View all</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="border-b border-slate-100 dark:border-slate-800">
+<tr>
+<th class="pb-3 text-[10px] font-bold text-slate-400 uppercase">Announcement</th>
+<th class="pb-3 text-[10px] font-bold text-slate-400 uppercase">Views</th>
+<th class="pb-3 text-[10px] font-bold text-slate-400 uppercase">CTR</th>
+<th class="pb-3 text-[10px] font-bold text-slate-400 uppercase text-right">Trend</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50 dark:divide-slate-900">
+<tr>
+<td class="py-4">
+<div class="flex flex-col">
+<span class="text-xs font-semibold">Spring Semester Registration</span>
+<span class="text-[10px] text-slate-500">Posted 2h ago by Admin</span>
+</div>
+</td>
+<td class="py-4 text-xs">2,410</td>
+<td class="py-4 text-xs">12.5%</td>
+<td class="py-4 text-right">
+<div class="inline-flex h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[85%]"></div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="py-4">
+<div class="flex flex-col">
+<span class="text-xs font-semibold">Career Fair 2024 Schedule</span>
+<span class="text-[10px] text-slate-500">Posted 5h ago by Career Office</span>
+</div>
+</td>
+<td class="py-4 text-xs">1,890</td>
+<td class="py-4 text-xs">8.2%</td>
+<td class="py-4 text-right">
+<div class="inline-flex h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[60%]"></div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="py-4">
+<div class="flex flex-col">
+<span class="text-xs font-semibold">Campus Cafeteria - New Menu</span>
+<span class="text-[10px] text-slate-500">Posted Yesterday by Services</span>
+</div>
+</td>
+<td class="py-4 text-xs">4,200</td>
+<td class="py-4 text-xs">24.1%</td>
+<td class="py-4 text-right">
+<div class="inline-flex h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[95%]"></div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="py-4">
+<div class="flex flex-col">
+<span class="text-xs font-semibold">Maintenance Notice: Wing B</span>
+<span class="text-[10px] text-slate-500">Posted 2 days ago by Facilities</span>
+</div>
+</td>
+<td class="py-4 text-xs">950</td>
+<td class="py-4 text-xs">4.2%</td>
+<td class="py-4 text-right">
+<div class="inline-flex h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[30%]"></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
