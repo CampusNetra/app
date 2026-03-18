@@ -1,7 +1,8 @@
 # wrangler.toml - Cloudflare Configuration
 
-name = "campus-netra"
+name = "app"
 compatibility_date = "2026-03-18"
+node_compat = true
 
 # Backend entry point
 main = "server/src/worker.js" 

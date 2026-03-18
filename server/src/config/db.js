@@ -1,5 +1,3 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
 
 let pool;
 
@@ -17,7 +15,10 @@ if (typeof globalThis.DB !== 'undefined' || typeof process.env.DB !== 'undefined
     }
   };
 } else {
-  // Local MySQL Setup
+  // Local MySQL Setup (Requires only in Node environment)
+  const mysql = require('mysql2/promise');
+  require('dotenv').config();
+  
   pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
