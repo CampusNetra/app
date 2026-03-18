@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CampusConnect - Faculty Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+<div class="flex h-screen w-full overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-64 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">school</span>
+</div>
+<div>
+<h1 class="text-sm font-bold tracking-tight">CampusConnect</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">University Admin</p>
+</div>
+</div>
+<nav class="flex-1 px-4 py-2 space-y-1 overflow-y-auto custom-scrollbar">
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">group</span> Students
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg bg-primary/10 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">person_search</span> Faculty
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">account_tree</span> Branches
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">layers</span> Sections
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">book</span> Subjects
+            </a>
+<div class="pt-4 pb-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management</div>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">assignment_ind</span> Assignments
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">chat</span> Channels
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">sports_esports</span> Clubs
+            </a>
+<div class="pt-4 pb-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">System</div>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">upload_file</span> Data Import
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">gavel</span> Moderation
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">monitoring</span> Analytics
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">settings</span> Settings
+            </a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<button class="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">logout</span> Logout
+            </button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col relative overflow-hidden">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-8 shrink-0">
+<div class="flex items-center max-w-md w-full">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/50 transition-all outline-none" placeholder="Search for faculty, departments, or files..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full ring-2 ring-white"></span>
+</button>
+<div class="h-8 w-px bg-slate-200 dark:border-slate-800"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold">Dr. Sarah Jenkins</p>
+<p class="text-[10px] text-slate-500 font-medium">Head Administrator</p>
+</div>
+<div class="size-9 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="Profile avatar" class="size-full object-cover" data-alt="Female professional portrait avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE6JSNv1EJfHIiq5F4SzLYPTkm47-l_QLX94EicQrtb9D6UP5ouAUk2l5dnnwvNKlj7KzscplFK2SDBot0cEtbl5YLlp2278B1Hy0MzdU3qPKfOMqA0KxEnuw_GQP5I6Yii95vgFNvzlLRny77cAyH5_N7hpfyjWeiat3Gn9Iw3M8Qkfsz3zfEsW6Sxk8sU6BEPF3eVYzdpDH_SGs_klrlN0uHKvdFcC4ygEYSl8vfrPhnooy3pLTuRXPk_WaNRkJmCjSxs_UW8BM"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 overflow-auto p-8 custom-scrollbar">
+<div class="flex flex-col gap-6 max-w-6xl mx-auto">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<h2 class="text-2xl font-bold tracking-tight">Faculty</h2>
+<p class="text-slate-500 text-sm">Manage, filter, and monitor all university staff members.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">file_download</span> Import CSV
+                        </button>
+<button class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span> Add Faculty
+                        </button>
+</div>
+</div>
+<!-- Table Toolbar -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full bg-transparent border-slate-200 dark:border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm focus:border-primary transition-all outline-none" placeholder="Filter by name or ID..." type="text"/>
+</div>
+<select class="bg-transparent border-slate-200 dark:border-slate-800 rounded-lg py-2 pl-4 pr-10 text-sm focus:border-primary transition-all outline-none w-full md:w-auto">
+<option>All Departments</option>
+<option>Computer Science</option>
+<option>Mathematics</option>
+<option>Physics</option>
+<option>Humanities</option>
+</select>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+<!-- Data Table -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+<table class="w-full text-left text-sm">
+<thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
+<tr>
+<th class="px-6 py-4">Faculty ID</th>
+<th class="px-6 py-4">Name</th>
+<th class="px-6 py-4">Department</th>
+<th class="px-6 py-4">Subjects</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 cursor-pointer transition-colors group">
+<td class="px-6 py-4 font-medium text-slate-500">#FAC-2931</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-blue-100 overflow-hidden">
+<img alt="Avatar" class="size-full" data-alt="Portrait of a senior faculty member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc-cd3nwtlUU4jfBDpi1bU-KE7VaReanImzkzjQYyJAnP4xRljnw_uXZYF0xbxe3USMCvnB-dCKhW9pyzHVPKE2hmcP8c4RnHzCGmu3z4w55TDd_LZhnbltWrJv1xPNdVNO7WhWEe2Af55Qo6ZCxtEktziYanoOE-dgjzumoj49zdWzFRfyTcDdpbNXsp1ocWS2H-lCA0q8I8ceb0fhafL1OPeKJsCg1lutjzHPbRiUTcI2vyL4Kh9Zr3nMwxoLEWRHmDDFvaAcBQ"/>
+</div>
+<div>
+<p class="font-bold">Dr. Robert Fischer</p>
+<p class="text-[11px] text-slate-400">robert.f@campus.edu</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">Computer Science</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-semibold">AI/ML</span>
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-semibold">Data Science</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+<span class="size-1.5 rounded-full bg-green-500"></span> Active
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors">
+<span class="material-symbols-outlined text-slate-400">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 cursor-pointer bg-slate-100 dark:bg-slate-800/50 transition-colors group">
+<td class="px-6 py-4 font-medium text-slate-500">#FAC-2940</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-orange-100 overflow-hidden">
+<img alt="Avatar" class="size-full" data-alt="Portrait of a female professor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdaqqsYZg2iiJgNtvQWGpk2d06Oyt4mVDwoZS1I9Ln030J4zBX43rHxMEkiBOCkWTqyrigTvk-SDVx2i5CDut5kDmYGoocQXf8PA8jST2Xhtn6YuReLBVtRLHmNi1dX-qChEp24OMgUHzBEvV3eBSCXO_BeWrXHt0dB7zMJnFSIypJd6gwWO33_Dmb58nPZHX9_Cjn3-bpYvye28vnFzAley4hkvmqVFrIupV-3mJdkOPIBMnreV7Rb32HazECGWJu2eyKM8rxf68"/>
+</div>
+<div>
+<p class="font-bold text-primary">Dr. Elena Rodriguez</p>
+<p class="text-[11px] text-slate-400">elena.rod@campus.edu</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 font-medium">Mathematics</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-semibold">Calculus</span>
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-semibold">Linear Algebra</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+<span class="size-1.5 rounded-full bg-green-500"></span> Active
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors">
+<span class="material-symbols-outlined text-slate-400">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 cursor-pointer transition-colors group">
+<td class="px-6 py-4 font-medium text-slate-500">#FAC-3012</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-purple-100 overflow-hidden">
+<img alt="Avatar" class="size-full" data-alt="Male professor avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMXaKhSB30RniOecA0lEo7uUPPNp8OWUh3RQ6H0cgGNJQY87Swoxlq3IKBI93KZWRD16jnpvJtDYuWQTwXmqoXrbx1OseViz7zMzPxAcX36yNldvvF2nqBTNxz42ZAM8jukJCk8EKUEZwIWh5peAX9TIgiIV_CDKWHNQ9UV2MD7xCliApFR2krmdVdVnvJpBvUG9-bettuYPO9VcL_xDOQf30ThkuwZmvM1z0gp692SenD8kmo7m5z3O3bducl8VwVJ8l5YlCYmn8"/>
+</div>
+<div>
+<p class="font-bold">Prof. James Sterling</p>
+<p class="text-[11px] text-slate-400">j.sterling@campus.edu</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">Physics</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-semibold">Quantum Mech</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+<span class="size-1.5 rounded-full bg-amber-500"></span> On Leave
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors">
+<span class="material-symbols-outlined text-slate-400">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- More rows for visual filler -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 cursor-pointer transition-colors group">
+<td class="px-6 py-4 font-medium text-slate-500">#FAC-3105</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-pink-100 overflow-hidden">
+<img alt="Avatar" class="size-full" data-alt="Female faculty avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA54EwkgrkpKyAxv56eaKY-BEXqX-1szVd4hTIhBqz5QW7RgV9c2PrFi2ML6Cz3WdIpHkFc_XUuO9HXwMK4ksWyQmsvAggf7CgSHxDT5xg8mSgKFq_ahwY5Bwh42pS318GImpZ-kxpw7GN34jw3Z_XcXLvXoVAsc8TryMVJqWpxM2akHGZn0j-bRcvJ14ySSIrYfgIbernSCxlIhm8OaGTmaD2eK4s82_cWwOsUPGVSUuCP1nC8mO1QS0WGUW98hvSEn8P95rwywPI"/>
+</div>
+<div>
+<p class="font-bold">Dr. Linda Chen</p>
+<p class="text-[11px] text-slate-400">linda.chen@campus.edu</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">Computer Science</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-semibold">Cybersecurity</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+<span class="size-1.5 rounded-full bg-green-500"></span> Active
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors">
+<span class="material-symbols-outlined text-slate-400">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<p class="text-xs text-slate-500">Showing 1 to 4 of 42 results</p>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-800 rounded-md hover:bg-white dark:hover:bg-slate-700 transition-colors">Previous</button>
+<button class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-800 rounded-md bg-white dark:bg-slate-700 shadow-sm font-bold">1</button>
+<button class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-800 rounded-md hover:bg-white dark:hover:bg-slate-700 transition-colors">2</button>
+<button class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-800 rounded-md hover:bg-white dark:hover:bg-slate-700 transition-colors">3</button>
+<button class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-800 rounded-md hover:bg-white dark:hover:bg-slate-700 transition-colors">Next</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Faculty Details Side Panel (Drawer) -->
+<div class="absolute inset-y-0 right-0 w-[400px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col z-50 transform translate-x-0 transition-transform duration-300">
+<!-- Panel Header -->
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-orange-100 overflow-hidden ring-4 ring-orange-50 dark:ring-orange-900/20">
+<img alt="Avatar" class="size-full" data-alt="Elena's profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAThfpCJJlXnzlL0B_Ke7DYasAztwqiNGd2KlYShFFmxtVfD0g1juwttO3Z_UJEOiKov6KZZ6poZ-qObPoG_3KSxRxUQ94blQH5wfkt5nk7JSWdc7G6mOuq1wQYRTl0eTvFI1p1bCTrk_Oyj1pmBSV1-yPpkKoIfil2jFGy6_S5R2j_Vt7iHG-Jdry3_4gs5ACt3AtTkTDNH8h2M7_VTujHfPJstDMeCWx0_B3X6j1Ck8DXzOo3DTPTsml24oHOXlGW7lc1zN6bItA"/>
+</div>
+<div>
+<h3 class="text-lg font-bold">Dr. Elena Rodriguez</h3>
+<p class="text-xs font-semibold text-primary uppercase tracking-wider">Mathematics Dept.</p>
+</div>
+</div>
+<button class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
+<span class="material-symbols-outlined text-slate-400">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+<!-- Status & Stats -->
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-center">
+<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Status</p>
+<p class="text-sm font-bold text-green-600 flex items-center justify-center gap-1">
+<span class="size-2 rounded-full bg-green-500"></span> Active
+                        </p>
+</div>
+<div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-center">
+<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Emp. Type</p>
+<p class="text-sm font-bold">Full Time</p>
+</div>
+</div>
+<!-- Contact Details -->
+<section>
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Contact &amp; Location</h4>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-slate-400 text-lg">mail</span>
+<div>
+<p class="text-xs text-slate-500">Email Address</p>
+<p class="text-sm font-medium">elena.rod@campus.edu</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-slate-400 text-lg">call</span>
+<div>
+<p class="text-xs text-slate-500">Phone Number</p>
+<p class="text-sm font-medium">+1 (555) 234-8910</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-slate-400 text-lg">location_on</span>
+<div>
+<p class="text-xs text-slate-500">Office Location</p>
+<p class="text-sm font-medium">Science Block A, Room 402</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Academic Assignments -->
+<section>
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Assignments</h4>
+<div class="space-y-6">
+<div>
+<p class="text-xs font-semibold text-slate-500 mb-2">Assigned Sections</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold">B.Tech CS-A</span>
+<span class="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold">B.Sc Math-1</span>
+<span class="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-bold">M.Tech AI-1</span>
+</div>
+</div>
+<div>
+<p class="text-xs font-semibold text-slate-500 mb-2">Current Subjects</p>
+<div class="space-y-2">
+<div class="p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-slate-500">functions</span>
+</div>
+<p class="text-sm font-medium">Advanced Calculus</p>
+</div>
+<span class="text-[10px] font-bold text-slate-400">MATH-401</span>
+</div>
+<div class="p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-slate-500">grid_4x4</span>
+</div>
+<p class="text-sm font-medium">Linear Algebra</p>
+</div>
+<span class="text-[10px] font-bold text-slate-400">MATH-102</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Activity Summary -->
+<section>
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Recent Activity</h4>
+<div class="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-px before:bg-slate-200 dark:before:bg-slate-800">
+<div class="relative">
+<span class="absolute -left-[19px] top-1 size-2.5 rounded-full bg-primary ring-4 ring-white dark:ring-slate-900"></span>
+<p class="text-sm font-semibold">Updated syllabus for Calculus</p>
+<p class="text-[10px] text-slate-400">Yesterday at 4:32 PM</p>
+</div>
+<div class="relative">
+<span class="absolute -left-[19px] top-1 size-2.5 rounded-full bg-slate-300 ring-4 ring-white dark:ring-slate-900"></span>
+<p class="text-sm font-semibold">Submitted attendance for CS-A</p>
+<p class="text-[10px] text-slate-400">2 days ago at 11:05 AM</p>
+</div>
+<div class="relative">
+<span class="absolute -left-[19px] top-1 size-2.5 rounded-full bg-slate-300 ring-4 ring-white dark:ring-slate-900"></span>
+<p class="text-sm font-semibold">Profile verified by Registrar</p>
+<p class="text-[10px] text-slate-400">May 12, 2024</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Panel Actions -->
+<div class="p-6 border-t border-slate-200 dark:border-slate-800 flex gap-3">
+<button class="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Edit Details</button>
+<button class="px-4 py-2 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">Message</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

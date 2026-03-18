@@ -40,6 +40,92 @@ const getChannels = async (req, res) => {
   }
 };
 
+const getStudents = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const {
+      search = '',
+      section_id,
+      verification_status,
+      is_active,
+      page = 1,
+      limit = 20
+    } = req.query;
+
+    const result = await adminService.getStudents({
+      dept_id,
+      search,
+      section_id,
+      verification_status,
+      is_active,
+      page,
+      limit
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getFaculty = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const {
+      search = '',
+      is_active,
+      page = 1,
+      limit = 20
+    } = req.query;
+
+    const result = await adminService.getFaculty({
+      dept_id,
+      search,
+      is_active,
+      page,
+      limit
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createStudent = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const student = await adminService.createStudent({ dept_id, data: req.body });
+    res.status(201).json(student);
+  } catch (error) {
+    const message = error.message || 'Failed to create student';
+    const statusCode =
+      message.includes('required') ||
+      message.includes('already') ||
+      message.includes('Invalid')
+        ? 400
+        : 500;
+    res.status(statusCode).json({ error: message });
+  }
+};
+
+const createFaculty = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const faculty = await adminService.createFaculty({ dept_id, data: req.body });
+    res.status(201).json(faculty);
+  } catch (error) {
+    const message = error.message || 'Failed to create faculty';
+    const statusCode =
+      message.includes('required') ||
+      message.includes('already') ||
+      message.includes('Invalid')
+        ? 400
+        : 500;
+    res.status(statusCode).json({ error: message });
+  }
+};
+
 const createAnnouncement = async (req, res) => {
   try {
     const { id: sender_id, dept_id } = req.user;
@@ -67,5 +153,9 @@ module.exports = {
   getAnnouncements,
   getActivity,
   getChannels,
+  getStudents,
+  getFaculty,
+  createStudent,
+  createFaculty,
   createAnnouncement
 };
