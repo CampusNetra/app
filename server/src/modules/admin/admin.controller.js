@@ -126,6 +126,95 @@ const createFaculty = async (req, res) => {
   }
 };
 
+const getDepartments = async (req, res) => {
+  try {
+    const departments = await adminService.getDepartments();
+    res.json(departments);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createDepartment = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const dept = await adminService.createDepartment(name);
+    res.status(201).json(dept);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getSections = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const sections = await adminService.getSections(dept_id);
+    res.json(sections);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createSection = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { name } = req.body;
+    const section = await adminService.createSection({ dept_id, name });
+    res.status(201).json(section);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getSubjects = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const subjects = await adminService.getSubjects(dept_id);
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createSubject = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { name } = req.body;
+    const subject = await adminService.createSubject({ dept_id, name });
+    res.status(201).json(subject);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getSubjectOfferings = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { section_id } = req.query;
+    const offerings = await adminService.getSubjectOfferings(dept_id, section_id);
+    res.json(offerings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createSubjectOffering = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { subject_id, section_id, faculty_id, term_id } = req.body;
+    const offering = await adminService.createSubjectOffering({
+      subject_id,
+      section_id,
+      faculty_id,
+      term_id,
+      dept_id
+    });
+    res.status(201).json(offering);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const createAnnouncement = async (req, res) => {
   try {
     const { id: sender_id, dept_id } = req.user;
@@ -148,6 +237,28 @@ const createAnnouncement = async (req, res) => {
   }
 };
 
+const updateStudent = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id: userId } = req.params;
+    const result = await adminService.updateUser({ dept_id, userId, data: req.body });
+    res.json(result);
+  } catch (error) {
+    res.status(error.message === 'User not found in this department' ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const updateFaculty = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id: userId } = req.params;
+    const result = await adminService.updateUser({ dept_id, userId, data: req.body });
+    res.json(result);
+  } catch (error) {
+    res.status(error.message === 'User not found in this department' ? 404 : 500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getStats,
   getAnnouncements,
@@ -157,5 +268,15 @@ module.exports = {
   getFaculty,
   createStudent,
   createFaculty,
+  updateStudent,
+  updateFaculty,
+  getDepartments,
+  createDepartment,
+  getSections,
+  createSection,
+  getSubjects,
+  createSubject,
+  getSubjectOfferings,
+  createSubjectOffering,
   createAnnouncement
 };

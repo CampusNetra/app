@@ -13,6 +13,9 @@ import PrivacyPolicy from './modules/legal/PrivacyPolicy';
 import TermsOfService from './modules/legal/TermsOfService';
 import StudentsManagement from './modules/admin/StudentsManagement';
 import FacultyManagement from './modules/admin/FacultyManagement';
+import BranchesManagement from './modules/admin/BranchesManagement';
+import SectionsManagement from './modules/admin/SectionsManagement';
+import SubjectsManagement from './modules/admin/SubjectsManagement';
 import FacultyAssignment from './modules/admin/FacultyAssignment';
 import ChannelsManagement from './modules/admin/ChannelsManagement';
 import DataImport from './modules/admin/DataImport';
@@ -31,6 +34,9 @@ function App() {
         <Route element={<AdminLayout />}>
           <Route path="/admin/students" element={<StudentsManagement />} />
           <Route path="/admin/faculty" element={<FacultyManagement />} />
+          <Route path="/admin/branches" element={<BranchesManagement />} />
+          <Route path="/admin/sections" element={<SectionsManagement />} />
+          <Route path="/admin/subjects" element={<SubjectsManagement />} />
           <Route path="/admin/faculty-assignments" element={<FacultyAssignment />} />
           <Route path="/admin/channels" element={<ChannelsManagement />} />
           <Route path="/admin/data-import" element={<DataImport />} />
