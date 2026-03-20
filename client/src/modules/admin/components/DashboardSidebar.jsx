@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Plus,
 } from 'lucide-react';
 
 const DashboardSidebar = ({ collapsed, setCollapsed, user }) => {
@@ -56,13 +57,13 @@ const DashboardSidebar = ({ collapsed, setCollapsed, user }) => {
       <div className="h-[72px] px-5 border-b border-slate-200 flex items-center justify-between">
         {!collapsed ? (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#e53935] text-white flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center">
               <ShieldAlert size={17} />
             </div>
             <span className="font-black text-[20px] tracking-tight text-slate-900">CampusNetra</span>
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-[#e53935] text-white flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center">
             <ShieldAlert size={17} />
           </div>
         )}
@@ -97,7 +98,7 @@ const DashboardSidebar = ({ collapsed, setCollapsed, user }) => {
                 title={collapsed ? item.label : ''}
                 className={`flex items-center gap-3 rounded-xl text-sm font-bold mb-1 transition-colors ${
                   isActive
-                    ? 'bg-[#e5393514] text-[#e53935]'
+                    ? 'bg-primary/10 text-primary'
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                 }`}
                 style={{

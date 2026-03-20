@@ -1,331 +1,252 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { 
+  Search, 
+  ShieldAlert, 
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
+  Zap,
+  Flag,
+  UserX,
+  AlertTriangle,
+  History,
+  TrendingUp,
+  X,
+  ShieldCheck,
+  CheckCircle2,
+  Trash2,
+  Bell,
+  BarChart3
+} from 'lucide-react';
+import api from '../../api';
 
 const ModerationDashboard = () => {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('messages'); // messages, posts, users
+    const [reports, setReports] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('messages'); // messages, posts, users
 
-  useEffect(() => {
-    fetchReports();
-  }, [activeTab]);
+    const [stats, setStats] = useState(null);
 
-  const fetchReports = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      // Mock API call
-      // const res = await axios.get(`/api/admin/moderation?type=${activeTab}`, {
-      //  headers: { Authorization: `Bearer ${token}` }
-      // });
-      // setReports(res.data);
-      
-      // Fallback data
-      setTimeout(() => {
-        setReports([
-          {
-            id: 1,
-            reporter: {
-              name: 'Sarah Jenkins',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC9U03F4Dz_HWHZNAHxK7wDTAQreqNSzUc_JC_rPpGVZyDjNWvsCOjYN9TVGl9J-CLQBvEryixbe8QqMhWFJtr1VHUQ0oqOYMumviVl-I33BXXo29xLhCJiWurfYgugk65X3wJg8UxjbzsbUYTak5y8EMm79EaKhyE6QOnngMDFM79369R9gCJpS5EWI2Fc61nn6JKA5SItbWiYxx3nfb6G7BOyg3fbBNVtdzJb0pRX5PxfGNrkVtn-XnwA25gHJtRKB9oTlPvJeS4'
-            },
-            reportedUser: {
-              name: 'Mike Thompson',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA83-IUpEvIz78u3xTKtEqVmzdMuZoTNRrRW3rmNCDM590lYwqK4RYw5oWizgyDjBSI5C4Db42_MwNZzkb_kT2n8Gva_YM1VvxE2I-_SO9Es3rAUMv40EdZUeT_YqZxM4FCeDfdHURt9VTHXF3o6WrWXbAv9PZHcpmFTuX0CAroWUmO-vOEqcQgSCTALTe7prZso_0efZQKBpfM0P1tecoG3hcwpCyhXxI46PDMNT0THrZGUTTZPllJ7zn2w3AF6SzVMzkiS2hTd3o'
-            },
-            messagePreview: '"You guys are absolutely useless in this project..."',
-            channel: '#cs-101-study',
-            reportCount: 7,
-            severity: 'orange'
-          },
-          {
-            id: 2,
-            reporter: {
-              name: 'Emily Chen',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDe-RIvehQkflFzEyWjy7PoRZELvmKr3Xy6tI7v0PmGR5i5jCNl3XWMafzq86gIHUBCkYQf6pErCeLYZEPJk7-MKNdVV46gjXKiYf4y8UUUeJbOv3Yluho0hAGQebUscj7V7njY-7r2A4XNuTMO4dQPcY1DH89vNHPxHod52A-7WnJWk61F_mMP3_vNqa2Hewi-NX6ZrV_bSxfgLlRKninhfHCP7kVUeQrtVO3XwLfDSE0q6-ghu9ilxGuOqw3388evFrwSrZ74sok'
-            },
-            reportedUser: {
-              name: 'David Miller',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBY-mRaiqiwqrK-fclr8Bkr0ZX7WmnRPb7a6xdU0u3Nh3dlDk5BmCnw76hWBDDOmlD38REOWcIeDnc1zd9LMiTxpjJbQaJdEj3jFIj3XBNZzTySNfMxLuztJPc6RBOViaOr1PrLz7HRZr8XCHnEL6N52I_iKhiBWLM0XKKCwe6nWIBmo5hyGxeRoG0hYcLE9qWA-_fRHCczlYaf9XZzRDNoOrHjGj9RsnHbnQaTx0_SPqwHO7T89kiKadjMUO0eDuXAL58gXYnJ5Pg'
-            },
-            messagePreview: '"Stop spamming the link every 2 minutes!"',
-            channel: '#general',
-            reportCount: 2,
-            severity: 'slate'
-          },
-          {
-            id: 3,
-            reporter: {
-              name: 'Jessica Wu',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDzLlcXiUNeOClrPLHG3ws7cQZACsQvrXNjYuCxKETEGi7v9cLitWv8BSVfXa7QLN8f92a7Xgvfs9ilBRpnQwu6DuseERywv-6uqb1qjEW705YjhtVnLkd16wsa1jAXowW22Zjt3l3qaCTkABPVub03qFOuj8NPLg-LlkWAkSqjHLt7vqEAT6n8mSsCL3jTsr4MouR2mRIozfReEKcaVTyDBQITvwP1wifa6jnPH3VsTPs8Cy9ZILmLLmDQbzCfy9gIE8Fn0AMg0J8'
-            },
-            reportedUser: {
-              name: 'Leo Garcia',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA4qYT-zVYeE0im0vgRCbMB_okdoKeFwwreRT4YSuevhz5XyChg-zdXZj6RxXVO9sF0BM2trLvN0Yq4RtUCeUF66wdGTTjQAqaWvquSgwOEQWXhLoZHQdV8jLv1DkeuXdvTBnitd4sA0MHX7j-r2HH4loq9qffjnzXMDLLxTT6GRDLMJAIvifI7OPwU7wkhufseI1SPDj6KdSmC20ZWraDJ5w7RB7G5thmWdaeNk770Ynd0rYHGzk_lv-wJDkQgKjcbgBQL2zpKEMI'
-            },
-            messagePreview: '"I have the exam answers for $50, DM me..."',
-            channel: '#market-place',
-            reportCount: 14,
-            severity: 'rose'
-          },
-          {
-            id: 4,
-            reporter: {
-              name: 'Prof. Higgins',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAaBA54amYvR9LhUWUV1kMCIfKuytTokkyBFMUF3fZus3rEJNslGTcL6MuC_fa-kysNjjx7X5xK0lSgRv5cO-MDFYw76VU-YHBXjL3wwKgZnh23NHGN512Rz5KVqq-PXA0Za9ilXLyyFTGVvRSooVUcdpXCvH-NmS3yTL3a_tq7vcu8bqey-5k3sIJPbxeGOZskitzgc9l40HOQo8QAQKMYPS22dCTUV5tJwZwRWID8OVrXkzrmc_Jhc2Hi4swxodn-RjAfUuKpb3U'
-            },
-            reportedUser: {
-              name: 'Ryan Peters',
-              avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD62qsHTtq_wqQpShmLukUmPxjrv1jt9523O9BmDfXkJWfkBRVVfAKo8v-pyRSRCStVT0nKnCXsVCvwHSu-uZbudXX_niWKHKKQ7U_v-QLtVBQuiKIXXN9fK7JnBvVw45hSua1m47N86Z3tFANCnWHGbGx_2m2eaDX3KemLCiK5ZtXOoBpuP2_YHmMVWDiUI9JxPUyoSf4krcAY5zqP7RxAPeTFeshJp4hWPDutODGla3OCgw4cVIzYaQNH4kwaOyV2-ckjEe_26rM'
-            },
-            messagePreview: '"Is anyone else thinking the homework is rigged?"',
-            channel: '#calc-2',
-            reportCount: 1,
-            severity: 'slate'
-          }
-        ]);
-        setLoading(false);
-      }, 500);
-    } catch (err) {
-      console.error('Error fetching reports:', err);
-      setLoading(false);
-    }
-  };
+    useEffect(() => {
+        fetchReports();
+        fetchStats();
+    }, [activeTab]);
 
-  const getSeverityClasses = (severity) => {
-    switch (severity) {
-      case 'rose':
-        return 'bg-rose-100 text-rose-600';
-      case 'orange':
-        return 'bg-orange-100 text-orange-600';
-      default:
-        return 'bg-slate-100 text-slate-600';
-    }
-  };
+    const fetchStats = async () => {
+        try {
+            const res = await api.get('/admin/stats');
+            setStats(res.data);
+        } catch (err) {
+            console.error('Error fetching stats:', err);
+        }
+    };
 
-  return (
-    <div className="flex-1 overflow-y-auto p-8 bg-background-light text-slate-900 custom-scrollbar">
-      <div className="max-w-7xl mx-auto w-full space-y-8">
-        
-        {/* Header Action Row (optional, based on design needs) */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-           <div>
-             <h2 className="text-3xl font-extrabold tracking-tight">Moderation</h2>
-             <p className="text-slate-500 mt-1">Review reported content and manage community safety.</p>
-           </div>
-        </div>
+    const fetchReports = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/admin/reports');
+            setReports(res.data || []);
+        } catch (err) {
+            console.error('Error fetching reports:', err);
+            setReports([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Pending Messages</span>
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                <span className="material-symbols-outlined">chat_error</span>
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-bold">24</span>
-              <span className="text-xs font-semibold text-emerald-500 mb-1.5 flex items-center">
-                <span className="material-symbols-outlined text-xs">trending_up</span> 12%
-              </span>
-            </div>
-          </div>
-          
-          <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Flagged Posts</span>
-              <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500">
-                <span className="material-symbols-outlined">article</span>
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-bold">12</span>
-              <span className="text-xs font-semibold text-orange-500 mb-1.5 flex items-center">
-                <span className="material-symbols-outlined text-xs">trending_down</span> 5%
-              </span>
-            </div>
-          </div>
-          
-          <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Active Suspensions</span>
-              <div className="p-2 rounded-lg bg-slate-500/10 text-slate-500">
-                <span className="material-symbols-outlined">person_off</span>
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-bold">5</span>
-              <span className="text-xs font-semibold text-slate-400 mb-1.5">0% change</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Moderation Tabs & Content */}
-        <div className="space-y-6">
-          <div className="border-b border-slate-200 flex gap-8">
-            <button 
-              onClick={() => setActiveTab('messages')}
-              className={`pb-4 border-b-2 text-sm font-bold transition-colors ${activeTab === 'messages' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-            >
-              Reported Messages
-            </button>
-            <button 
-              onClick={() => setActiveTab('posts')}
-              className={`pb-4 border-b-2 text-sm font-bold transition-colors ${activeTab === 'posts' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-            >
-              Reported Posts
-            </button>
-            <button 
-              onClick={() => setActiveTab('users')}
-              className={`pb-4 border-b-2 text-sm font-bold transition-colors ${activeTab === 'users' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-            >
-              Suspended Users
-            </button>
-          </div>
-
-          {/* Reported Messages Table Section */}
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
-                  <tr>
-                    <th className="px-6 py-4">Reporter</th>
-                    <th className="px-6 py-4">Reported User</th>
-                    <th className="px-6 py-4">Message Preview</th>
-                    <th className="px-6 py-4">Channel</th>
-                    <th className="px-6 py-4 text-center">Reports</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="6" className="text-center py-8">
-                        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
-                      </td>
-                    </tr>
-                  ) : reports.length > 0 ? (
-                    reports.map((report) => (
-                      <tr key={report.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden">
-                              <img src={report.reporter.avatar} alt={report.reporter.name} className="w-full h-full object-cover" />
+    return (
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="px-8 py-8 space-y-10 max-w-7xl mx-auto pb-20">
+                {/* Top Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {[
+                        { label: 'Pending Messages', value: stats?.pendingReports || 0, color: 'text-orange-500', bg: 'bg-orange-50', icon: MessageSquare },
+                        { label: 'Flagged Posts', value: stats?.pendingReports || 0, color: 'text-orange-500', bg: 'bg-orange-50', icon: Trash2 },
+                        { label: 'Active Suspensions', value: stats?.suspendedUsers || 0, color: 'text-slate-400', bg: 'bg-slate-50', icon: UserX }
+                    ].map((stat, i) => (
+                        <div key={i} className="p-8 bg-white border border-slate-100 rounded-[24px] shadow-sm relative overflow-hidden flex flex-col justify-between h-[180px]">
+                            <div className="flex justify-between items-start">
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</span>
+                                <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
+                                    <stat.icon size={18} fill="currentColor" fillOpacity={0.2} />
+                                </div>
                             </div>
-                            <span className="text-sm font-medium">{report.reporter.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden">
-                              <img src={report.reportedUser.avatar} alt={report.reportedUser.name} className="w-full h-full object-cover" />
+                            <div className="flex items-end gap-3 translate-y-2">
+                                <h3 className="text-4xl font-extrabold text-slate-900 tracking-tight">{stat.value}</h3>
                             </div>
-                            <span className="text-sm font-medium">{report.reportedUser.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-slate-600 truncate max-w-[200px]">{report.messagePreview}</p>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase tracking-tighter">
-                            {report.channel}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${getSeverityClasses(report.severity)}`}>
-                            {report.reportCount}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
-                            <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors">Review</button>
-                            <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors">Warn</button>
-                            <button className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors">
-                              <span className="material-symbols-outlined text-lg">delete</span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Tabs & Table Section */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-8 border-b border-slate-100 pb-px font-sans">
+                        {[
+                            { id: 'messages', label: 'Reported Messages' },
+                            { id: 'posts', label: 'Reported Posts' },
+                            { id: 'users', label: 'Suspended Users' }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`pb-4 px-2 text-sm font-bold transition-all relative ${activeTab === tab.id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                {tab.label}
+                                {activeTab === tab.id && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full" />
+                                )}
                             </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="text-center py-8 text-slate-500">No reports found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Table Footer / Pagination */}
-            <div className="px-6 py-4 flex items-center justify-between bg-slate-50 border-t border-slate-200">
-              <span className="text-xs text-slate-500 font-medium">Showing {reports.length} of {Math.max(24, reports.length)} pending reports</span>
-              <div className="flex gap-2">
-                <button className="px-3 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white disabled:opacity-50" disabled>Previous</button>
-                <button className="px-3 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50">Next</button>
-              </div>
-            </div>
-          </div>
-        </div>
+                        ))}
+                    </div>
 
-        {/* Recently Moderated Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12 pb-12">
-          {/* Recent Actions */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">history</span>
-              Recent Actions
-            </h3>
-            <div className="space-y-3">
-              <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-rose-500">do_not_disturb_on</span>
-                  <div>
-                    <p className="text-sm font-semibold">Message Deleted</p>
-                    <p className="text-xs text-slate-500">Reported by 3 users in #announcements</p>
-                  </div>
+                    <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-50 bg-[#FCFDFF]">
+                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Reporter</th>
+                                    <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Reported User</th>
+                                    <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Message Preview</th>
+                                    <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Channel</th>
+                                    <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Reports</th>
+                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan="6" className="px-8 py-10 text-center">
+                                            <div className="w-6 h-6 border-2 border-primary border-t-transparent animate-spin rounded-full mx-auto" />
+                                        </td>
+                                    </tr>
+                                ) : reports.length > 0 ? reports.map((report, i) => (
+                                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-8 py-6 whitespace-nowrap">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shrink-0">
+                                                    {report.reporter?.avatar ? <img src={report.reporter.avatar} alt="" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-400 uppercase">{report.reporter_name?.[0]}</div>}
+                                                </div>
+                                                <span className="text-[13px] font-bold text-slate-700">{report.reporter_name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-6 whitespace-nowrap">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shrink-0">
+                                                    {report.reported?.avatar ? <img src={report.reported.avatar} alt="" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-400 uppercase">{report.reported_name?.[0]}</div>}
+                                                </div>
+                                                <span className="text-[13px] font-bold text-slate-700">{report.reported_name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-6">
+                                            <p className="text-[13px] font-medium text-slate-500 line-clamp-1 italic italic">
+                                                "{report.message_content}"
+                                            </p>
+                                        </td>
+                                        <td className="px-6 py-6 whitespace-nowrap">
+                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-lg uppercase tracking-wider border border-slate-200/50">
+                                                #{report.channel_name}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-6 text-center">
+                                            <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto border border-orange-100/50">
+                                                <span className="text-xs font-black">1</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right whitespace-nowrap">
+                                            <button 
+                                                className="px-5 py-2 hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-700 uppercase tracking-widest shadow-sm transition-all active:scale-95"
+                                                onClick={() => console.log('Review report', report.id)}
+                                            >
+                                                Review
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="6" className="px-8 py-20 text-center text-slate-400 font-medium">
+                                            No pending reports found for review.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        
+                        <div className="px-8 py-6 bg-slate-50/30 flex items-center justify-between border-t border-slate-50">
+                            <span className="text-[11px] font-bold text-slate-400 capitalize underline decoration-slate-200 underline-offset-4 decoration-2">Showing {reports.length} pending reports</span>
+                            <div className="flex items-center gap-2">
+                                <button className="px-4 py-2 text-xs font-black uppercase text-slate-400 border border-slate-200 rounded-xl disabled:opacity-30" disabled>Previous</button>
+                                <button className="px-4 py-2 text-xs font-black uppercase text-slate-900 border border-slate-200 rounded-xl hover:bg-white shadow-sm transition-all active:scale-95" disabled>Next</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <span className="text-[10px] font-medium text-slate-400">2m ago</span>
-              </div>
-              <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-primary">warning</span>
-                  <div>
-                    <p className="text-sm font-semibold">Warning Issued</p>
-                    <p className="text-xs text-slate-500">Sent to @user_192 for inappropriate language</p>
-                  </div>
+
+                {/* Bottom Rows: Recent Actions & Trends */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div className="space-y-6">
+                        <h4 className="flex items-center gap-3 text-lg font-black text-slate-900 uppercase tracking-tight">
+                           <History className="text-primary" size={24} />
+                           Recent Activity
+                        </h4>
+                        <div className="space-y-4">
+                            {reports.length > 0 ? reports.slice(0, 3).map((report, i) => (
+                                <div key={i} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-[24px] shadow-sm hover:translate-x-1 transition-all duration-300">
+                                    <div className="flex items-center gap-5">
+                                        <div className={`w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center`}>
+                                            <AlertTriangle size={20} strokeWidth={3} />
+                                        </div>
+                                        <div>
+                                            <h5 className="text-[15px] font-black text-slate-900 leading-none">Report Pending</h5>
+                                            <p className="text-[12px] font-medium text-slate-400 mt-1">From @{report.reporter_name} in #{report.channel_name}</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">{new Date(report.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                            )) : (
+                                <div className="p-8 text-center bg-white border border-slate-100 rounded-[24px] text-slate-400 italic">
+                                    No recent moderation actions recorded.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <h4 className="flex items-center gap-3 text-lg font-black text-slate-900 uppercase tracking-tight">
+                           <TrendingUp className="text-primary" size={24} />
+                           Activity Trends
+                        </h4>
+                        <div className="p-8 bg-white border border-slate-100 rounded-[28px] shadow-sm h-[200px] flex items-end justify-between relative overflow-hidden group">
+                           {/* Chart Background Grid (aesthetic only) */}
+                            <div className="absolute inset-x-8 top-12 bottom-12 flex flex-col justify-between pointer-events-none opacity-[0.03]">
+                                {[1,2,3].map(i => <div key={i} className="h-px bg-slate-900 w-full" />)}
+                            </div>
+
+                           {/* Bar Chart representing real message history if available */}
+                           {(stats?.messageHistory?.length > 0 ? stats.messageHistory : [10, 20, 15, 25, 30, 18, 12]).map((item, i) => {
+                               const value = typeof item === 'object' ? item.count : item;
+                               const max = Math.max(...(stats?.messageHistory?.map(d => d.count) || [30]));
+                               const h = (value / max) * 100;
+                               return (
+                                   <div key={i} className="flex-1 px-1 flex flex-col items-center gap-2 group/bar">
+                                       <div 
+                                          className={`w-full rounded-t-xl transition-all duration-700 ease-out group-hover/bar:brightness-110 ${i >= (stats?.messageHistory?.length - 2) ? 'bg-primary shadow-[0_4px_12px_rgba(255,97,41,0.3)]' : 'bg-orange-100'}`}
+                                          style={{ height: `${Math.max(10, h)}%` }}
+                                       />
+                                   </div>
+                               );
+                           })}
+
+                           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                               <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] bg-white/90 backdrop-blur px-4 py-2 rounded-full border border-slate-100 shadow-sm leading-none whitespace-nowrap">
+                                  {stats?.messageHistory?.length > 0 ? '7 Day Activity Frequency' : 'Pending Data Sync'}
+                               </p>
+                           </div>
+                        </div>
+                    </div>
                 </div>
-                <span className="text-[10px] font-medium text-slate-400">15m ago</span>
-              </div>
             </div>
-          </div>
-
-          {/* Report Trends */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">analytics</span>
-              Report Trends
-            </h3>
-            <div className="h-32 w-full bg-white border border-slate-200 rounded-xl relative overflow-hidden group shadow-sm">
-              <div className="absolute inset-0 flex items-end px-4 pb-2 gap-1 justify-around">
-                <div className="w-full bg-primary/20 rounded-t-sm h-[40%]"></div>
-                <div className="w-full bg-primary/20 rounded-t-sm h-[60%]"></div>
-                <div className="w-full bg-primary/40 rounded-t-sm h-[30%]"></div>
-                <div className="w-full bg-primary/60 rounded-t-sm h-[80%]"></div>
-                <div className="w-full bg-primary/30 rounded-t-sm h-[50%]"></div>
-                <div className="w-full bg-primary rounded-t-sm h-[90%] group-hover:h-[95%] transition-all"></div>
-                <div className="w-full bg-primary/40 rounded-t-sm h-[40%]"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest opacity-80 bg-white/80 px-2 py-1 rounded">7 Day Report Frequency</p>
-              </div>
-            </div>
-          </div>
         </div>
-
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ModerationDashboard;

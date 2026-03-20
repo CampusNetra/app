@@ -4,31 +4,74 @@ const bcrypt = require('bcryptjs');
 const getDashboardStats = async (dept_id) => {
   // 1. Total Students
   const [students] = await pool.execute(
-    'SELECT COUNT(*) as count FROM users WHERE role = "student" AND dept_id = ?',
-    [dept_id]
+    'SELECT COUNT(*) as count FROM users WHERE role = "student" AND (dept_id = ? OR ? IS NULL)',
+    [dept_id, dept_id]
   );
 
   // 2. Total Faculty
   const [faculty] = await pool.execute(
-    'SELECT COUNT(*) as count FROM users WHERE role = "faculty" AND dept_id = ?',
-    [dept_id]
+    'SELECT COUNT(*) as count FROM users WHERE role = "faculty" AND (dept_id = ? OR ? IS NULL)',
+    [dept_id, dept_id]
   );
 
   // 3. Active Sections
   const [sections] = await pool.execute(
-    'SELECT COUNT(*) as count FROM sections WHERE dept_id = ?',
-    [dept_id]
+    'SELECT COUNT(*) as count FROM sections WHERE (dept_id = ? OR ? IS NULL)',
+    [dept_id, dept_id]
   );
 
-  // 4. Total Channels (Branch + Sections + Subjects)
+  // 4. Total Channels
   const [channels] = await pool.execute(
-    'SELECT COUNT(*) as count FROM channels WHERE dept_id = ?',
-    [dept_id]
+    'SELECT COUNT(*) as count FROM channels WHERE (dept_id = ? OR ? IS NULL)',
+    [dept_id, dept_id]
   );
 
   // 5. Messages Today
   const [messages] = await pool.execute(
-    'SELECT COUNT(*) as count FROM messages WHERE date(created_at) = date("now")'
+    `SELECT COUNT(*) as count FROM messages m
+     LEFT JOIN channels c ON m.channel_id = c.id
+     WHERE date(m.created_at) = date("now") AND (c.dept_id = ? OR ? IS NULL)`,
+    [dept_id, dept_id]
+  );
+
+  // 6. Total Memberships
+  const [memberships] = await pool.execute(
+    `SELECT COUNT(*) as count FROM channel_members cm
+     JOIN channels c ON cm.channel_id = c.id
+     WHERE (c.dept_id = ? OR ? IS NULL)`,
+    [dept_id, dept_id]
+  );
+
+  // 7. Total Clubs
+  const [clubs] = await pool.execute(
+    'SELECT COUNT(*) as count FROM clubs WHERE (dept_id = ? OR ? IS NULL)',
+    [dept_id, dept_id]
+  );
+
+  // 8. Pending Reports
+  const [reports] = await pool.execute(
+    `SELECT COUNT(*) as count FROM channel_reports r
+     JOIN messages m ON r.message_id = m.id
+     JOIN channels c ON m.channel_id = c.id
+     WHERE r.status = 'pending' AND (c.dept_id = ? OR ? IS NULL)`,
+    [dept_id, dept_id]
+  );
+
+  // 9. Suspended Users
+  const [suspended] = await pool.execute(
+    'SELECT COUNT(*) as count FROM users WHERE is_active = 0 AND (dept_id = ? OR ? IS NULL)',
+    [dept_id, dept_id]
+  );
+
+  // 10. Last 7 days message counts
+  const [msgHistory] = await pool.execute(
+    `SELECT date(m.created_at) as date, COUNT(*) as count
+     FROM messages m
+     LEFT JOIN channels c ON m.channel_id = c.id
+     WHERE m.created_at >= date('now', '-7 days') AND (c.dept_id = ? OR ? IS NULL)
+     GROUP BY date(m.created_at)
+     ORDER BY date ASC`,
+    [dept_id, dept_id]
   );
 
   return {
@@ -36,7 +79,13 @@ const getDashboardStats = async (dept_id) => {
     totalFaculty: faculty[0].count,
     activeSections: sections[0].count,
     totalChannels: channels[0].count,
-    messagesToday: messages[0].count
+    messagesToday: messages[0].count,
+    totalMemberships: memberships[0].count,
+    totalClubs: clubs[0].count,
+    pendingReports: reports[0].count,
+    suspendedUsers: suspended[0].count,
+    messageHistory: msgHistory,
+    totalUsers: students[0].count + faculty[0].count
   };
 };
 
@@ -75,12 +124,121 @@ const getUserActivity = async (dept_id) => {
   return [...users, ...announcements].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6);
 };
 
-const getChannels = async (dept_id) => {
+const getChannels = async (dept_id = null, type = null) => {
+  let sql = `
+    SELECT 
+      c.*, 
+      (SELECT COUNT(*) FROM channel_members cm WHERE cm.channel_id = c.id) as members
+    FROM channels c`;
+  const params = [];
+
+  const whereClauses = [];
+  if (dept_id) {
+    whereClauses.push('c.dept_id = ?');
+    params.push(dept_id);
+  }
+  if (type) {
+    whereClauses.push('c.type = ?');
+    params.push(type);
+  }
+
+  if (whereClauses.length > 0) {
+    sql += ' WHERE ' + whereClauses.join(' AND ');
+  }
+
+  sql += ' ORDER BY c.created_at DESC';
+
+  const [rows] = await pool.execute(sql, params);
+  return rows;
+};
+
+const getClubs = async (dept_id) => {
   const [rows] = await pool.execute(
-    'SELECT id, name, type FROM channels WHERE dept_id = ?',
+    `SELECT c.*, ch.id as channel_id, ch.name as channel_name 
+     FROM clubs c 
+     LEFT JOIN channels ch ON c.channel_id = ch.id 
+     WHERE c.dept_id = ?`,
     [dept_id]
   );
   return rows;
+};
+
+const createClub = async ({ dept_id, name, description, category }) => {
+  // 1. Create Channel
+  const [chanResult] = await pool.execute(
+    'INSERT INTO channels (name, type, dept_id) VALUES (?, "club", ?)',
+    [`Club: ${name}`, dept_id]
+  );
+  const channelId = chanResult.insertId;
+
+  // 2. Create Club
+  const [result] = await pool.execute(
+    'INSERT INTO clubs (name, description, category, dept_id, channel_id) VALUES (?, ?, ?, ?, ?)',
+    [name, description, category, dept_id, channelId]
+  );
+
+  return { id: result.insertId, name, channel_id: channelId };
+};
+
+const updateClub = async (id, data) => {
+  const { name, description, category } = data;
+  await pool.execute(
+    'UPDATE clubs SET name = ?, description = ?, category = ? WHERE id = ?',
+    [name, description, category, id]
+  );
+  return { id, ...data };
+};
+
+const deleteClub = async (id) => {
+  const [rows] = await pool.execute('SELECT channel_id FROM clubs WHERE id = ?', [id]);
+  if (rows.length > 0) {
+    const channelId = rows[0].channel_id;
+    await pool.execute('DELETE FROM channels WHERE id = ?', [channelId]);
+  }
+  await pool.execute('DELETE FROM clubs WHERE id = ?', [id]);
+  return { success: true };
+};
+
+const deleteChannel = async (id) => {
+  await pool.execute('DELETE FROM channels WHERE id = ?', [id]);
+  return { success: true };
+};
+
+const getReports = async (dept_id) => {
+  const [rows] = await pool.execute(
+    `SELECT 
+      r.*, 
+      m.content as message_content,
+      u_reporter.name as reporter_name,
+      u_reported.name as reported_name,
+      c.name as channel_name
+    FROM channel_reports r
+    JOIN messages m ON r.message_id = m.id
+    JOIN users u_reporter ON r.reporter_id = u_reporter.id
+    JOIN users u_reported ON m.sender_id = u_reported.id
+    JOIN channels c ON m.channel_id = c.id
+    WHERE c.dept_id = ? AND r.status = 'pending'
+    ORDER BY r.created_at DESC`,
+    [dept_id]
+  );
+  return rows;
+};
+
+const resolveReport = async (reportId, action) => {
+  // action: 'delete', 'dismiss', 'suspend'
+  const [reportRows] = await pool.execute('SELECT message_id FROM channel_reports WHERE id = ?', [reportId]);
+  
+  if (reportRows.length > 0 && action === 'delete') {
+    const messageId = reportRows[0].message_id;
+    // Archive or Delete message
+    await pool.execute('DELETE FROM messages WHERE id = ?', [messageId]);
+  }
+
+  await pool.execute(
+    "UPDATE channel_reports SET status = ? WHERE id = ?",
+    [action === 'dismiss' ? 'dismissed' : 'resolved', reportId]
+  );
+  return { success: true };
 };
 
 const getStudents = async ({
@@ -390,7 +548,11 @@ const createFaculty = async ({ dept_id, data }) => {
   return createUserByRole({ dept_id, role: 'faculty', data });
 };
 
-const getDepartments = async () => {
+const getDepartments = async (deptId = null) => {
+  if (deptId) {
+    const [rows] = await pool.execute('SELECT * FROM departments WHERE id = ?', [deptId]);
+    return rows;
+  }
   const [rows] = await pool.execute('SELECT * FROM departments ORDER BY name ASC');
   return rows;
 };
@@ -455,6 +617,29 @@ const createSubject = async ({ dept_id, name }) => {
   return { id: result.insertId, name: name.trim(), dept_id };
 };
 
+const updateSubject = async (dept_id, subjectId, { name }) => {
+  if (!name || !name.trim()) throw new Error('Subject name is required');
+  const [rows] = await pool.execute('SELECT id FROM subjects WHERE id = ? AND dept_id = ?', [subjectId, dept_id]);
+  if (rows.length === 0) throw new Error('Subject not found');
+
+  await pool.execute('UPDATE subjects SET name = ? WHERE id = ?', [name.trim(), subjectId]);
+  return { id: subjectId, name: name.trim() };
+};
+
+const deleteSubject = async (dept_id, subjectId) => {
+  const [rows] = await pool.execute('SELECT id FROM subjects WHERE id = ? AND dept_id = ?', [subjectId, dept_id]);
+  if (rows.length === 0) throw new Error('Subject not found');
+
+  // Check if there are offerings for this subject
+  const [offerings] = await pool.execute('SELECT id FROM subject_offerings WHERE subject_id = ?', [subjectId]);
+  if (offerings.length > 0) {
+    throw new Error('Cannot delete subject with active faculty assignments');
+  }
+
+  await pool.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
+  return { success: true };
+};
+
 const getSubjectOfferings = async (dept_id, section_id) => {
   let query = `
     SELECT 
@@ -462,11 +647,13 @@ const getSubjectOfferings = async (dept_id, section_id) => {
       s.name as subject_name, 
       u.name as faculty_name, 
       u.avatar_url as faculty_avatar,
+      d.name as faculty_dept_name,
       sec.name as section_name,
       t.name as term_name
     FROM subject_offerings so
     JOIN subjects s ON so.subject_id = s.id
     LEFT JOIN users u ON so.faculty_id = u.id
+    LEFT JOIN departments d ON u.dept_id = d.id
     JOIN sections sec ON so.section_id = sec.id
     LEFT JOIN terms t ON so.term_id = t.id
     WHERE s.dept_id = ?
@@ -490,12 +677,12 @@ const getSubjectOfferings = async (dept_id, section_id) => {
     subject_name: r.subject_name,
     section_name: r.section_name,
     faculty_name: r.faculty_name,
+    term_name: r.term_name,
     faculty: {
       name: r.faculty_name,
-      avatar: r.faculty_avatar
-    },
-    term_name: r.term_name,
-    created_at: r.created_at
+      avatar: r.faculty_avatar,
+      dept_name: r.faculty_dept_name
+    }
   }));
 };
 
@@ -543,7 +730,6 @@ const createSubjectOffering = async ({ subject_id, section_id, faculty_id, term_
   }
 
   // 3. Auto-link Members
-  // Add Faculty
   if (faculty_id) {
     await pool.execute(
       'INSERT IGNORE INTO channel_members (channel_id, user_id) VALUES (?, ?)',
@@ -551,7 +737,6 @@ const createSubjectOffering = async ({ subject_id, section_id, faculty_id, term_
     );
   }
 
-  // Add Students of the section
   const [students] = await pool.execute(
     'SELECT id FROM users WHERE role = "student" AND section_id = ?',
     [section_id]
@@ -565,6 +750,36 @@ const createSubjectOffering = async ({ subject_id, section_id, faculty_id, term_
   }
 
   return { id: offeringId, channel_id: channelId };
+};
+
+const deleteSubjectOffering = async (dept_id, offeringId) => {
+  // Check ownership
+  const [rows] = await pool.execute(
+    'SELECT so.id FROM subject_offerings so JOIN subjects s ON so.subject_id = s.id WHERE so.id = ? AND s.dept_id = ?',
+    [offeringId, dept_id]
+  );
+  if (rows.length === 0) throw new Error('Offering not found');
+
+  // Delete associated channel first (optional, maybe keep it but usually link is gone)
+  await pool.execute('DELETE FROM channels WHERE subject_offering_id = ?', [offeringId]);
+  await pool.execute('DELETE FROM subject_offerings WHERE id = ?', [offeringId]);
+  
+  return { success: true };
+};
+
+const updateSubjectOffering = async (dept_id, offeringId, data) => {
+  const { faculty_id, term_id } = data;
+  const [rows] = await pool.execute(
+    'SELECT so.id FROM subject_offerings so JOIN subjects s ON so.subject_id = s.id WHERE so.id = ? AND s.dept_id = ?',
+    [offeringId, dept_id]
+  );
+  if (rows.length === 0) throw new Error('Offering not found');
+
+  await pool.execute(
+    'UPDATE subject_offerings SET faculty_id = ?, term_id = ? WHERE id = ?',
+    [faculty_id, term_id, offeringId]
+  );
+  return { id: offeringId, faculty_id, term_id };
 };
 
 const createAnnouncement = async ({ sender_id, dept_id, channel_id, content }) => {
@@ -664,6 +879,13 @@ module.exports = {
   getRecentAnnouncements,
   getUserActivity,
   getChannels,
+  getClubs,
+  createClub,
+  updateClub,
+  deleteClub,
+  deleteChannel,
+  getReports,
+  resolveReport,
   getStudents,
   getFaculty,
   createStudent,
@@ -674,8 +896,12 @@ module.exports = {
   createSection,
   getSubjects,
   createSubject,
+  updateSubject,
+  deleteSubject,
   getSubjectOfferings,
   createSubjectOffering,
+  deleteSubjectOffering,
+  updateSubjectOffering,
   createAnnouncement,
   updateUser,
   updateStudent: updateUser,

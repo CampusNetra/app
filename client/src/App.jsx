@@ -18,6 +18,7 @@ import SectionsManagement from './modules/admin/SectionsManagement';
 import SubjectsManagement from './modules/admin/SubjectsManagement';
 import FacultyAssignment from './modules/admin/FacultyAssignment';
 import ChannelsManagement from './modules/admin/ChannelsManagement';
+import ClubsManagement from './modules/admin/ClubsManagement';
 import DataImport from './modules/admin/DataImport';
 import ModerationDashboard from './modules/admin/ModerationDashboard';
 import SystemAnalytics from './modules/admin/SystemAnalytics';
@@ -39,6 +40,7 @@ function App() {
           <Route path="/admin/subjects" element={<SubjectsManagement />} />
           <Route path="/admin/faculty-assignments" element={<FacultyAssignment />} />
           <Route path="/admin/channels" element={<ChannelsManagement />} />
+          <Route path="/admin/clubs" element={<ClubsManagement />} />
           <Route path="/admin/data-import" element={<DataImport />} />
           <Route path="/admin/moderation" element={<ModerationDashboard />} />
           <Route path="/admin/analytics" element={<SystemAnalytics />} />

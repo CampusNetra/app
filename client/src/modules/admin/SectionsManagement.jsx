@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, Plus, Users, Grid2X2, Search, ChevronRight, X, BookOpen, UserCheck, Trash2, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { RefreshCw, Plus, Users, Grid2X2, Search, ChevronRight, X, BookOpen, UserCheck, Trash2, Calendar, Loader2, Edit3 } from 'lucide-react';
 import api from '../../api';
+import DeleteConfirmationModal from './components/DeleteConfirmationModal';
 
 const SectionsManagement = () => {
+  const navigate = useNavigate();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,9 +23,16 @@ const SectionsManagement = () => {
   
   // Faculty Assignment State
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [editingOfferingId, setEditingOfferingId] = useState(null);
   const [allSubjects, setAllSubjects] = useState([]);
   const [allFaculty, setAllFaculty] = useState([]);
-  const [assignmentData, setAssignmentData] = useState({ subject_id: '', faculty_id: '', term_id: 'default_term' });
+  const [allTerms, setAllTerms] = useState([]);
+  const [assignmentData, setAssignmentData] = useState({ subject_id: '', faculty_id: '', term_id: '' });
+  const [submittingAssignment, setSubmittingAssignment] = useState(false);
+
+  // Delete Modal State
+  const [offeringToDelete, setOfferingToDelete] = useState(null);
+  const [isDeletingOffering, setIsDeletingOffering] = useState(false);
 
   useEffect(() => {
     fetchSections();
@@ -60,18 +70,59 @@ const SectionsManagement = () => {
     }
   };
 
-  const openAssignModal = async () => {
+  const openAssignModal = async (offering = null) => {
+    if (offering) {
+      setEditingOfferingId(offering.id);
+      setAssignmentData({
+        subject_id: offering.subject_id,
+        faculty_id: offering.faculty_id,
+        term_id: offering.term_id
+      });
+    } else {
+      setEditingOfferingId(null);
+      setAssignmentData({ subject_id: '', faculty_id: '', term_id: '' });
+    }
+
     setIsAssignModalOpen(true);
     try {
-      const [subjRes, facRes] = await Promise.all([
+      const [subjRes, facRes, termRes] = await Promise.all([
         api.get('/admin/subjects'),
-        api.get('/admin/faculty')
+        api.get('/admin/faculty'),
+        api.get('/terms')
       ]);
       setAllSubjects(subjRes.data || []);
-      setAllFaculty(facRes.data || []);
+      setAllFaculty(facRes.data?.faculty || facRes.data?.users || facRes.data || []);
+      setAllTerms(termRes.data || []);
+      
+      if (!offering) {
+        // Auto-select active term
+        const activeTerm = termRes.data?.find(t => t.is_active);
+        if (activeTerm) {
+          setAssignmentData(prev => ({ ...prev, term_id: activeTerm.id }));
+        }
+      }
     } catch (err) {
-      console.error('Error loading subjects/faculty:', err);
+      console.error('Loading subjects/faculty/terms:', err);
     }
+  };
+
+  const handleDeleteOffering = (offering) => {
+     setOfferingToDelete(offering);
+  };
+
+  const confirmDeleteOffering = async () => {
+     if (!offeringToDelete) return;
+     setIsDeletingOffering(true);
+     try {
+       await api.delete(`/admin/offerings/${offeringToDelete.id}`);
+       setSectionOfferings(sectionOfferings.filter(o => o.id !== offeringToDelete.id));
+       setOfferingToDelete(null);
+     } catch (err) {
+       console.error('Delete error:', err);
+       alert('Failed to remove offering.');
+     } finally {
+       setIsDeletingOffering(false);
+     }
   };
 
   const handleCreateSection = async (e) => {
@@ -93,11 +144,22 @@ const SectionsManagement = () => {
 
   const handleAssignFaculty = async (e) => {
     e.preventDefault();
+    setSubmittingAssignment(true);
     try {
-      await api.post('/offerings/assign-faculty', {
-        ...assignmentData,
-        section_id: selectedSection.id
-      });
+      if (editingOfferingId) {
+        await api.put(`/admin/offerings/${editingOfferingId}`, {
+          faculty_id: Number(assignmentData.faculty_id),
+          term_id: Number(assignmentData.term_id)
+        });
+      } else {
+        await api.post('/admin/offerings/assign-faculty', {
+          ...assignmentData,
+          section_id: selectedSection.id,
+          faculty_id: Number(assignmentData.faculty_id),
+          subject_id: Number(assignmentData.subject_id),
+          term_id: Number(assignmentData.term_id)
+        });
+      }
       setIsAssignModalOpen(false);
       // Refresh offerings
       const offRes = await api.get(`/admin/offerings`, { params: { section_id: selectedSection.id } });
@@ -105,6 +167,8 @@ const SectionsManagement = () => {
     } catch (err) {
       console.error('Assignment error:', err);
       alert(err.response?.data?.error || 'Failed to assign faculty');
+    } finally {
+      setSubmittingAssignment(false);
     }
   };
 
@@ -198,7 +262,6 @@ const SectionsManagement = () => {
           <div className="h-full flex flex-col">
             <div className="px-10 py-10 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="text-[11px] font-bold text-primary uppercase tracking-[0.3em] mb-2 block">Management Hub</span>
                 <h3 className="text-3xl font-bold text-slate-900 font-display">{selectedSection.name}</h3>
                 <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-wider">{selectedSection.dept_name}</p>
               </div>
@@ -214,8 +277,8 @@ const SectionsManagement = () => {
             <div className="px-10 border-b border-slate-100 bg-white sticky top-0 z-10">
               <div className="flex gap-10">
                 {[
-                  { id: 'students', label: 'Student Directory', icon: Users },
-                  { id: 'academics', label: 'Academic Offerings', icon: BookOpen }
+                  { id: 'students', label: 'Students', icon: Users },
+                  { id: 'academics', label: 'Subjects & Faculty', icon: BookOpen }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -254,8 +317,12 @@ const SectionsManagement = () => {
                               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{student.reg_no}</p>
                             </div>
                           </div>
-                          <div className="px-3 py-1 rounded-lg bg-green-50 text-[10px] font-bold text-green-600 uppercase tracking-wider border border-green-100">
-                             Verified
+                          <div className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${
+                            (student.verification_status || 'pending').toLowerCase() === 'verified' ? 'bg-green-50 text-green-600 border-green-100' :
+                            (student.verification_status || 'pending').toLowerCase() === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                            'bg-rose-50 text-rose-600 border-rose-100'
+                          }`}>
+                             {student.verification_status === 'verified' ? 'Verified' : 'Pending'}
                           </div>
                         </div>
                       ))
@@ -301,12 +368,28 @@ const SectionsManagement = () => {
                               <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-50">
                                  <div className="flex items-center gap-1.5">
                                     <Calendar size={12} className="text-slate-400" />
-                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{offering.term_id}</span>
+                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{offering.term_name || offering.term_id}</span>
                                  </div>
-                                 <button className="text-xs font-bold text-primary hover:underline ml-auto">Control Center</button>
-                                 <button className="text-xs font-bold text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all">
-                                    <Trash2 size={16} />
-                                 </button>
+                                 <div className="ml-auto flex items-center gap-3">
+                                   <button 
+                                     onClick={() => navigate('/admin/faculty-assignments')}
+                                     className="text-xs font-bold text-primary hover:underline"
+                                   >
+                                     Control Center
+                                   </button>
+                                   <button 
+                                     onClick={() => openAssignModal(offering)}
+                                     className="text-slate-400 hover:text-primary transition-all p-1"
+                                   >
+                                      <Edit3 size={16} />
+                                   </button>
+                                   <button 
+                                     onClick={() => handleDeleteOffering(offering)}
+                                     className="text-slate-400 hover:text-red-500 transition-all p-1"
+                                   >
+                                      <Trash2 size={16} />
+                                   </button>
+                                 </div>
                               </div>
                             </div>
                           </div>
@@ -333,8 +416,12 @@ const SectionsManagement = () => {
           <div className="w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
              <div className="p-10 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                   <h3 className="text-2xl font-bold text-slate-900 font-display">Assign Academic Resource</h3>
-                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Connect Subject to Licensed Faculty</p>
+                   <h3 className="text-2xl font-bold text-slate-900 font-display">
+                      {editingOfferingId ? 'Edit Assignment' : 'Assign Faculty'}
+                   </h3>
+                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                      {editingOfferingId ? 'Edit Assignment' : 'Connect Subject to Faculty'}
+                   </p>
                 </div>
                 <button 
                   onClick={() => setIsAssignModalOpen(false)}
@@ -347,11 +434,12 @@ const SectionsManagement = () => {
              <form onSubmit={handleAssignFaculty} className="p-10 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="space-y-3">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Academic Subject</label>
-                      <div className="relative group">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Subject</label>
+                      <div className={`relative group ${editingOfferingId ? 'opacity-50 pointer-events-none' : ''}`}>
                          <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
                          <select 
-                           required
+                           required={!editingOfferingId}
+                           disabled={editingOfferingId}
                            className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-sm font-bold appearance-none transition-all"
                            value={assignmentData.subject_id}
                            onChange={(e) => setAssignmentData({...assignmentData, subject_id: e.target.value})}
@@ -363,7 +451,7 @@ const SectionsManagement = () => {
                    </div>
                    
                    <div className="space-y-3">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Assigned Faculty</label>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Faculty</label>
                       <div className="relative group">
                          <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
                          <select 
@@ -380,33 +468,39 @@ const SectionsManagement = () => {
                 </div>
                 
                 <div className="space-y-3">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Academic Term ID</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Term</label>
                     <div className="relative group">
                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                         <input 
-                           type="text"
+                         <select 
                            required
-                           placeholder="e.g. 2024_ODD"
-                           className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-sm font-bold transition-all"
+                           className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-sm font-bold appearance-none transition-all"
                            value={assignmentData.term_id}
                            onChange={(e) => setAssignmentData({...assignmentData, term_id: e.target.value})}
-                         />
+                         >
+                            <option value="">Select Term</option>
+                            {allTerms.map(t => (
+                              <option key={t.id} value={t.id}>{t.name} {t.is_active ? '(ACTIVE)' : ''}</option>
+                            ))}
+                         </select>
                     </div>
                 </div>
 
                 <div className="flex gap-4 pt-6">
                    <button
                      type="button"
+                     disabled={submittingAssignment}
                      onClick={() => setIsAssignModalOpen(false)}
-                     className="flex-1 py-5 rounded-[1.5rem] border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all font-sans"
+                     className="flex-1 py-5 rounded-[1.5rem] border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all font-sans disabled:opacity-50"
                    >
                      Discard Request
                    </button>
                    <button
                      type="submit"
-                     className="flex-[2] py-5 rounded-[1.5rem] bg-primary text-white text-base font-bold shadow-2xl shadow-primary/30 hover:bg-primary/90 hover:translate-y-[-2px] active:translate-y-0 transition-all active:scale-[0.98]"
+                     disabled={submittingAssignment}
+                     className="flex-[2] py-5 rounded-[1.5rem] bg-primary text-white text-base font-bold shadow-2xl shadow-primary/30 hover:bg-primary/90 hover:translate-y-[-2px] active:translate-y-0 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                    >
-                     Confirm Assignment
+                     {submittingAssignment ? <Loader2 size={20} className="animate-spin" /> : <UserCheck size={20} />}
+                     {editingOfferingId ? 'Update Record' : 'Confirm Assignment'}
                    </button>
                 </div>
              </form>
@@ -414,7 +508,6 @@ const SectionsManagement = () => {
         </div>
       )}
 
-      {/* Add Section Modal remains same but with better styling */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
@@ -440,13 +533,22 @@ const SectionsManagement = () => {
               </div>
               <div className="flex flex-col gap-3 pt-4">
                 <button type="submit" disabled={creating || !newSectionName.trim()} className="w-full py-4 rounded-2xl bg-primary text-white text-base font-bold shadow-xl shadow-primary/30 hover:translate-y-[-2px] active:scale-95 transition-all disabled:opacity-50">
-                  {creating ? 'Finalizing...' : 'Initialize Section'}
+                   {creating ? 'Finalizing...' : 'Initialize Section'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <DeleteConfirmationModal 
+        isOpen={!!offeringToDelete}
+        onClose={() => setOfferingToDelete(null)}
+        onConfirm={confirmDeleteOffering}
+        loading={isDeletingOffering}
+        title="Remove Faculty"
+        message={`Are you sure you want to remove ${offeringToDelete?.faculty_name} from teaching ${offeringToDelete?.subject_name}?`}
+      />
     </div>
   );
 };

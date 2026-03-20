@@ -116,7 +116,7 @@ CREATE TABLE channels (
 
     name TEXT NOT NULL,
 
-    type TEXT NOT NULL CHECK(type IN ('branch', 'section', 'subject')),
+    type TEXT NOT NULL CHECK(type IN ('branch', 'section', 'subject', 'announcement', 'club', 'global')),
 
     dept_id INTEGER,
     section_id INTEGER,
@@ -146,6 +146,36 @@ CREATE TABLE channel_members (
 
     FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+-- =========================
+-- 9. clubs
+-- =========================
+CREATE TABLE clubs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    category TEXT,
+    dept_id INTEGER,
+    channel_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (dept_id) REFERENCES departments(id) ON DELETE CASCADE,
+    FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE
+);
+
+-- =========================
+-- 10. channel_reports
+-- =========================
+CREATE TABLE channel_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id INTEGER,
+    reporter_id INTEGER,
+    reason TEXT,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'resolved', 'dismissed')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- =========================

@@ -1,43 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { 
+  Search, 
+  Eye, 
+  UserPlus, 
+  Ban, 
+  CheckCircle2, 
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
+  Users,
+  Zap,
+  Plus
+} from 'lucide-react';
+import api from '../../api';
 
 const ChannelsManagement = () => {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('section');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchChannels();
+    fetchStats();
   }, [activeTab]);
+
+  const fetchStats = async () => {
+    try {
+        const res = await api.get('/admin/stats');
+        setStats(res.data);
+    } catch (err) {
+        console.error('Error fetching stats:', err);
+    }
+  };
 
   const fetchChannels = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`/api/admin/channels?type=${activeTab}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setChannels(res.data);
+      const res = await api.get(`/admin/channels?type=${activeTab}`);
+      setChannels(res.data || []);
     } catch (err) {
       console.error('Error fetching channels:', err);
-      // Fallback mock data based on tab
-      const mockData = {
-        section: [
-          { id: 1, name: 'CS101-Morning', type: 'Section', members: 124, createdAt: '2023-10-12T00:00:00Z', status: 'Active' },
-          { id: 2, name: 'ENG202-Afternoon', type: 'Section', members: 82, createdAt: '2023-11-05T00:00:00Z', status: 'Active' },
-          { id: 3, name: 'ARCH310-Design', type: 'Section', members: 45, createdAt: '2023-12-01T00:00:00Z', status: 'Draft' },
-          { id: 4, name: 'MATH104-SectionB', type: 'Section', members: 156, createdAt: '2023-09-20T00:00:00Z', status: 'Disabled' },
-        ],
-        subject: [
-          { id: 5, name: 'Data Structures Base', type: 'Subject', members: 350, createdAt: '2023-08-10T00:00:00Z', status: 'Active' },
-          { id: 6, name: 'Calculus Discussion', type: 'Subject', members: 210, createdAt: '2023-08-12T00:00:00Z', status: 'Active' },
-        ],
-        announcement: [
-          { id: 7, name: 'Campus Wide News', type: 'Announcement', members: 12450, createdAt: '2022-01-01T00:00:00Z', status: 'Active' },
-          { id: 8, name: 'Computer Science Dept', type: 'Announcement', members: 850, createdAt: '2022-06-15T00:00:00Z', status: 'Active' },
-        ]
-      };
-      setChannels(mockData[activeTab] || []);
+      setChannels([]);
     } finally {
       setLoading(false);
     }
@@ -47,192 +54,175 @@ const ChannelsManagement = () => {
     switch (status?.toLowerCase()) {
       case 'active':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold border border-emerald-100/50">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
             Active
-          </span>
+          </div>
         );
       case 'draft':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-bold border border-amber-100/50">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></div>
             Draft
-          </span>
+          </div>
         );
       case 'disabled':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold border border-slate-200/50">
+            <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
             Disabled
-          </span>
+          </div>
         );
       default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-            {status}
-          </span>
-        );
+        return null;
     }
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-background-light text-slate-900">
-      <div className="max-w-7xl mx-auto w-full">
-        {/* Page Title Section */}
-        <div className="mb-8 flex justify-between items-end">
-          <div>
-            <h2 className="text-3xl font-black tracking-tight">Channels</h2>
-            <p className="text-slate-500 mt-1">Manage and monitor all communication channels across the campus.</p>
+    <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="px-8 pb-12 space-y-8 max-w-7xl mx-auto">
+        {/* Title */}
+        <div className="flex md:items-center justify-between gap-6 pt-6">
+          <div className="pt-4">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Channels</h1>
+            <p className="text-slate-500 font-medium text-lg mt-1 font-sans">Manage and monitor all communication channels across the campus.</p>
           </div>
-          <button className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-xl text-sm font-bold shadow-sm shadow-primary/20 flex items-center justify-center gap-2 transition-colors">
-            <span className="material-symbols-outlined text-lg">add</span>
-            <span>Create New</span>
+          <button className="flex items-center gap-2 px-8 py-4 bg-primary text-white text-sm font-black rounded-2xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 uppercase tracking-widest whitespace-nowrap self-start mt-4">
+             <Plus size={18} />
+             Create New Channel
           </button>
         </div>
 
-        {/* Tabs Navigation (Shadcn Style) */}
-        <div className="w-full">
-          <div className="inline-flex h-12 items-center justify-center rounded-xl bg-slate-100 p-1 text-slate-500 mb-6">
-            <button 
-              onClick={() => setActiveTab('section')}
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-sm transition-all ${activeTab === 'section' ? 'bg-white text-slate-950 shadow-sm font-bold' : 'font-medium hover:text-slate-900'}`}
+        {/* Custom Tabs Bar */}
+        <div className="bg-slate-100/50 p-1 rounded-[18px] inline-flex items-center">
+          {[
+            { id: 'section', label: 'Section Channels' },
+            { id: 'subject', label: 'Subject Channels' },
+            { id: 'announcement', label: 'Announcement Channels' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-8 py-3 rounded-[14px] text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-white text-slate-900 shadow-sm shadow-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              Section Channels
+              {tab.label}
             </button>
-            <button 
-              onClick={() => setActiveTab('subject')}
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-sm transition-all ${activeTab === 'subject' ? 'bg-white text-slate-950 shadow-sm font-bold' : 'font-medium hover:text-slate-900'}`}
-            >
-              Subject Channels
-            </button>
-            <button 
-              onClick={() => setActiveTab('announcement')}
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-sm transition-all ${activeTab === 'announcement' ? 'bg-white text-slate-950 shadow-sm font-bold' : 'font-medium hover:text-slate-900'}`}
-            >
-              Announcement Channels
-            </button>
-          </div>
+          ))}
+        </div>
 
-          {/* Data Table */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm mb-12">
-            <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50/50">
-               <div className="relative">
-                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-                 <input className="pl-10 pr-4 py-1.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-64" placeholder="Search channels..." type="text"/>
+        {/* Table Section */}
+        <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-50">
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Channel Name</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Members</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Created At</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-8 py-10 text-center">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent animate-spin rounded-full mx-auto" />
+                  </td>
+                </tr>
+              ) : channels.length > 0 ? channels.map((channel, i) => (
+                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-8 py-6 text-sm font-bold text-slate-900">{channel.name}</td>
+                  <td className="px-6 py-6">
+                    <span className="px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-wider border border-slate-200/50">
+                      {channel.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-6 text-sm font-bold text-slate-600">{channel.members}</td>
+                  <td className="px-6 py-6 text-sm font-medium text-slate-400">
+                    {new Date(channel.created_at).toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' })}
+                  </td>
+                  <td className="px-6 py-6">{getStatusBadge(channel.status || 'Active')}</td>
+                  <td className="px-8 py-6 text-right">
+                    <div className="flex items-center justify-end gap-5 text-slate-400">
+                      <button 
+                        className="hover:text-primary transition-colors" 
+                        title="View"
+                        onClick={() => console.log('View channel', channel.id)}
+                      >
+                         <Eye size={18} />
+                      </button>
+                      <button 
+                        className="hover:text-primary transition-colors" 
+                        title="Invite"
+                        onClick={() => console.log('Invite to channel', channel.id)}
+                      >
+                         <UserPlus size={18} />
+                      </button>
+                      {channel.status === 'Disabled' ? (
+                        <button 
+                          className="hover:text-emerald-500 transition-colors" 
+                          title="Enable"
+                          onClick={() => console.log('Enable channel', channel.id)}
+                        >
+                          <CheckCircle2 size={18} />
+                        </button>
+                      ) : (
+                        <button 
+                          className="hover:text-rose-500 transition-colors" 
+                          title="Disable"
+                          onClick={() => console.log('Disable channel', channel.id)}
+                        >
+                          <Ban size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="6" className="px-8 py-10 text-center text-slate-400 font-medium">
+                    No channels found for this category.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* Table Footer */}
+          <div className="px-8 py-6 bg-slate-50/30 flex items-center justify-between border-t border-slate-50">
+            <span className="text-[11px] font-bold text-slate-400 capitalize">Showing {channels.length} results</span>
+            <div className="flex items-center gap-2">
+              <button className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-30" disabled>
+                 <ChevronLeft size={16} />
+              </button>
+              <div className="flex items-center gap-1">
+                <button className="w-8 h-8 rounded-lg bg-primary text-white text-xs font-bold shadow-lg shadow-primary/20">1</button>
+              </div>
+              <button className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-30" disabled>
+                 <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { label: 'Total Channels', value: stats?.totalChannels || 0, icon: MessageSquare, color: 'text-orange-500', bg: 'bg-orange-50' },
+            { label: 'Total Memberships', value: stats?.totalMemberships?.toLocaleString() || 0, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
+            { label: 'Daily Messages', value: stats?.messagesToday?.toLocaleString() || 0, icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' }
+          ].map((stat, i) => (
+            <div key={i} className="p-10 bg-white border border-slate-100 rounded-[28px] shadow-sm relative overflow-hidden group">
+               <div className="flex justify-between items-start mb-6">
+                  <div className={`w-14 h-14 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center transition-transform duration-500 group-hover:scale-110`}>
+                     <stat.icon size={24} fill="currentColor" fillOpacity={0.2} />
+                  </div>
                </div>
+               <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mb-1">{stat.label}</p>
+               <h3 className="text-4xl font-black text-slate-900 tracking-tight">{stat.value}</h3>
             </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Channel Name</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Members</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Created At</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="6" className="text-center py-8">
-                        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
-                      </td>
-                    </tr>
-                  ) : channels.length > 0 ? (
-                    channels.map((channel, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-sm">{channel.name}</td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                            {channel.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-center font-medium">{channel.members}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">
-                          {new Date(channel.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric'})}
-                        </td>
-                        <td className="px-6 py-4">
-                          {getStatusBadge(channel.status)}
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors" title="View">
-                            <span className="material-symbols-outlined text-lg">visibility</span>
-                          </button>
-                          <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors" title="Manage Members">
-                            <span className="material-symbols-outlined text-lg">group_add</span>
-                          </button>
-                          {channel.status?.toLowerCase() === 'disabled' ? (
-                            <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-emerald-500 hover:bg-emerald-50 transition-colors" title="Enable Channel">
-                              <span className="material-symbols-outlined text-lg">check_circle</span>
-                            </button>
-                          ) : (
-                            <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors" title="Disable Channel">
-                              <span className="material-symbols-outlined text-lg">block</span>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="text-center py-8 text-slate-500">No channels found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Pagination */}
-            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-              <p className="text-xs text-slate-500">Showing 1 to {channels.length} of {channels.length} channels</p>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1 border border-slate-200 rounded-lg text-xs font-medium hover:bg-slate-50 disabled:opacity-50" disabled>Previous</button>
-                <button className="px-3 py-1 bg-primary text-white border border-primary rounded-lg text-xs font-bold">1</button>
-                <button className="px-3 py-1 border border-slate-200 rounded-lg text-xs font-medium hover:bg-slate-50 disabled:opacity-50" disabled>Next</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Channel Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                  <span className="material-symbols-outlined">forum</span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-500 uppercase">+12% vs LY</span>
-              </div>
-              <h4 className="text-slate-500 text-sm font-medium">Total Channels</h4>
-              <p className="text-2xl font-black mt-1">124</p>
-            </div>
-            
-            <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-blue-500/10 text-blue-500 rounded-lg flex items-center justify-center">
-                  <span className="material-symbols-outlined">person_add</span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-500 uppercase">+5% vs LY</span>
-              </div>
-              <h4 className="text-slate-500 text-sm font-medium">Total Memberships</h4>
-              <p className="text-2xl font-black mt-1">12,450</p>
-            </div>
-            
-            <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-lg flex items-center justify-center">
-                  <span className="material-symbols-outlined">flash_on</span>
-                </div>
-                <span className="text-[10px] font-bold text-red-500 uppercase">-2% vs LY</span>
-              </div>
-              <h4 className="text-slate-500 text-sm font-medium">Daily Messages</h4>
-              <p className="text-2xl font-black mt-1">45.2k</p>
-            </div>
-          </div>
-          
+          ))}
         </div>
       </div>
     </div>

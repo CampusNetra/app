@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, Plus, Building2, Calendar, BookOpen, Layers, X, ChevronRight, UserSquare2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { RefreshCw, Plus, Building2, Calendar, BookOpen, Layers, X, ChevronRight, UserSquare2, Loader2 } from 'lucide-react';
 import api from '../../api';
+import SubjectModal from './components/SubjectModal';
 
 const BranchesManagement = () => {
+  const navigate = useNavigate();
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
   const [creating, setCreating] = useState(false);
   
@@ -78,21 +82,47 @@ const BranchesManagement = () => {
     });
   };
 
+  const [submittingSubject, setSubmittingSubject] = useState(false);
+
+  const handleAddSubject = async (subjectName) => {
+    setSubmittingSubject(true);
+    try {
+      await api.post('/admin/subjects', { name: subjectName, dept_id: selectedBranch.id });
+      setIsSubjectModalOpen(false);
+      // Refresh details
+      await fetchBranchDetails(selectedBranch);
+    } catch (err) {
+      console.error('Error adding subject:', err);
+      alert(err.response?.data?.error || 'Failed to add subject');
+    } finally {
+      setSubmittingSubject(false);
+    }
+  };
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isSuperAdmin = user.role === 'super_admin';
+
   return (
     <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-background-light relative">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 font-display">Branches</h1>
-          <p className="text-slate-500 mt-1">Manage academic departments and their communication hubs.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 font-display">
+            {isSuperAdmin ? 'Departments' : 'My Department'}
+          </h1>
+          <p className="text-slate-500 mt-1">
+            {isSuperAdmin ? 'Manage academic departments.' : 'Overview of your department.'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-all shadow-lg shadow-primary/20 active:scale-95"
-          >
-            <Plus size={18} />
-            Add Branch
-          </button>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-all shadow-lg shadow-primary/20 active:scale-95"
+            >
+              <Plus size={18} />
+              Add Department
+            </button>
+          )}
           <button
             onClick={fetchBranches}
             className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all bg-white shadow-sm text-slate-600"
@@ -122,7 +152,7 @@ const BranchesManagement = () => {
                   <Building2 size={28} />
                 </div>
                 <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100/50 px-3 py-1.5 rounded-xl border border-slate-100">
-                  DEPT ID: #{branch.id}
+                  ID: #{branch.id}
                 </span>
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2 font-display">{branch.name}</h3>
@@ -145,7 +175,7 @@ const BranchesManagement = () => {
                   onClick={() => fetchBranchDetails(branch)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-primary hover:bg-primary/5 transition-all active:scale-95"
                 >
-                  Configure
+                   Details
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -156,8 +186,8 @@ const BranchesManagement = () => {
             <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-slate-100 animate-bounce">
               <Building2 size={40} className="text-slate-300" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2 font-display">No branches discovered</h3>
-            <p className="text-slate-500 max-w-xs mx-auto">Build the foundation by adding your first academic department today.</p>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2 font-display">No departments found</h3>
+            <p className="text-slate-500 max-w-xs mx-auto">Add your first academic department to get started.</p>
           </div>
         )}
       </div>
@@ -168,7 +198,6 @@ const BranchesManagement = () => {
           <div className="h-full flex flex-col">
             <div className="px-8 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1 block">Department Overview</span>
                 <h3 className="text-2xl font-bold text-slate-900 font-display">{selectedBranch.name}</h3>
               </div>
               <button 
@@ -185,7 +214,7 @@ const BranchesManagement = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Layers size={20} className="text-primary" />
-                    <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Active Sections</h4>
+                    <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Sections</h4>
                   </div>
                   <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">
                     {branchDetails.sections.length} Listed
@@ -197,14 +226,17 @@ const BranchesManagement = () => {
                     [1, 2].map(i => <div key={i} className="h-16 rounded-2xl bg-slate-100 animate-pulse" />)
                   ) : branchDetails.sections.length > 0 ? (
                     branchDetails.sections.map(section => (
-                      <div key={section.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-primary/20 hover:shadow-md transition-all group">
+                      <div 
+                        key={section.id} 
+                        onClick={() => navigate('/admin/sections')}
+                        className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-primary/20 hover:shadow-md transition-all group cursor-pointer"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center font-bold text-slate-600 group-hover:bg-primary group-hover:text-white transition-all">
                             {section.name.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900">{section.name}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verified Channel</p>
+                             <p className="text-sm font-bold text-slate-900">{section.name}</p>
                           </div>
                         </div>
                         <ChevronRight size={16} className="text-slate-300 group-hover:text-primary transition-colors" />
@@ -223,10 +255,15 @@ const BranchesManagement = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <BookOpen size={20} className="text-primary" />
-                    <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Curriculum Subjects</h4>
+                    <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Subjects</h4>
                   </div>
-                  <button className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-                    <Plus size={14} /> Add Subject
+                  <button 
+                    onClick={() => setIsSubjectModalOpen(true)}
+                    disabled={submittingSubject}
+                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {submittingSubject ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                    Add Subject
                   </button>
                 </div>
                 
@@ -279,8 +316,7 @@ const BranchesManagement = () => {
                </button>
             </div>
             <form onSubmit={handleCreateBranch} className="p-10 space-y-8">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">Branch Identity Name</label>
+                <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">Department Name</label>
                 <input
                   type="text"
                   required
@@ -288,17 +324,15 @@ const BranchesManagement = () => {
                   value={newBranchName}
                   onChange={(e) => setNewBranchName(e.target.value)}
                   className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-base font-medium transition-all placeholder:text-slate-400 shadow-inner"
-                  placeholder="e.g. Computer Applications"
+                  placeholder="e.g. Computer Science"
                 />
-                <p className="text-[10px] font-bold text-slate-400 mt-3 ml-1 uppercase tracking-widest leading-relaxed">This name will be visible across the platform in all channels and records.</p>
-              </div>
               <div className="flex flex-col gap-3 pt-4">
                 <button
                   type="submit"
                   disabled={creating || !newBranchName.trim()}
-                  className="w-full py-4 rounded-2xl bg-primary text-white text-base font-bold shadow-xl shadow-primary/30 hover:bg-primary/90 hover:translate-y-[-2px] active:translate-y-0 active:scale-95 transition-all disabled:opacity-50 disabled:translate-y-0"
+                  className="w-full py-4 rounded-2xl bg-primary text-white text-base font-bold shadow-xl shadow-primary/30 hover:bg-primary/90 hover:translate-y-[-2px] active:translate-y(0) active:scale-95 transition-all disabled:opacity-50 disabled:translate-y-0"
                 >
-                  {creating ? 'Finalizing...' : 'Initialize Branch'}
+                  {creating ? 'Creating...' : 'Create Department'}
                 </button>
                 <button
                   type="button"
@@ -312,6 +346,13 @@ const BranchesManagement = () => {
           </div>
         </div>
       )}
+
+      <SubjectModal 
+        isOpen={isSubjectModalOpen}
+        onClose={() => setIsSubjectModalOpen(false)}
+        onSubmit={handleAddSubject}
+        creating={submittingSubject}
+      />
     </div>
   );
 };

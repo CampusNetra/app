@@ -33,8 +33,80 @@ const getActivity = async (req, res) => {
 const getChannels = async (req, res) => {
   try {
     const { dept_id } = req.user;
-    const channels = await adminService.getChannels(dept_id);
+    const { type } = req.query;
+    const channels = await adminService.getChannels(dept_id, type);
     res.json(channels);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getClubs = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const clubs = await adminService.getClubs(dept_id);
+    res.json(clubs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createClub = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const club = await adminService.createClub({ dept_id, ...req.body });
+    res.status(201).json(club);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updateClub = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await adminService.updateClub(id, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteClub = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await adminService.deleteClub(id);
+    res.json({ message: 'Club deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteChannel = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await adminService.deleteChannel(id);
+    res.json({ message: 'Channel deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getReports = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const reports = await adminService.getReports(dept_id);
+    res.json(reports);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const resolveReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body;
+    await adminService.resolveReport(id, action);
+    res.json({ message: 'Report resolved' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -128,7 +200,10 @@ const createFaculty = async (req, res) => {
 
 const getDepartments = async (req, res) => {
   try {
-    const departments = await adminService.getDepartments();
+    const { role, dept_id } = req.user;
+    // Only super_admin can see all departments
+    const deptIdToFetch = role === 'super_admin' ? null : dept_id;
+    const departments = await adminService.getDepartments(deptIdToFetch);
     res.json(departments);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -137,9 +212,13 @@ const getDepartments = async (req, res) => {
 
 const createDepartment = async (req, res) => {
   try {
+    const { role } = req.user;
+    if (role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admins can create departments' });
+    }
     const { name } = req.body;
-    const dept = await adminService.createDepartment(name);
-    res.status(201).json(dept);
+    const department = await adminService.createDepartment(name);
+    res.status(201).json(department);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -187,6 +266,31 @@ const createSubject = async (req, res) => {
   }
 };
 
+const updateSubject = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const subject = await adminService.updateSubject(dept_id, id, req.body);
+    res.json(subject);
+  } catch (error) {
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const deleteSubject = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    await adminService.deleteSubject(dept_id, id);
+    res.json({ message: 'Subject deleted successfully' });
+  } catch (error) {
+    if (error.message.includes('active faculty assignments')) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
 const getSubjectOfferings = async (req, res) => {
   try {
     const { dept_id } = req.user;
@@ -212,6 +316,28 @@ const createSubjectOffering = async (req, res) => {
     res.status(201).json(offering);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+const updateSubjectOffering = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const result = await adminService.updateSubjectOffering(dept_id, id, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(error.message === 'Offering not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const deleteSubjectOffering = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    await adminService.deleteSubjectOffering(dept_id, id);
+    res.json({ message: 'Offering deleted successfully' });
+  } catch (error) {
+    res.status(error.message === 'Offering not found' ? 404 : 500).json({ error: error.message });
   }
 };
 
@@ -264,6 +390,13 @@ module.exports = {
   getAnnouncements,
   getActivity,
   getChannels,
+  getClubs,
+  createClub,
+  updateClub,
+  deleteClub,
+  deleteChannel,
+  getReports,
+  resolveReport,
   getStudents,
   getFaculty,
   createStudent,
@@ -276,7 +409,11 @@ module.exports = {
   createSection,
   getSubjects,
   createSubject,
+  updateSubject,
+  deleteSubject,
   getSubjectOfferings,
   createSubjectOffering,
+  updateSubjectOffering,
+  deleteSubjectOffering,
   createAnnouncement
 };

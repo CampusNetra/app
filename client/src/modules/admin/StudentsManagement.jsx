@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { RefreshCw, Search, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { RefreshCw, Search, ChevronLeft, ChevronRight, Plus, Upload } from 'lucide-react';
 import api from '../../api';
 import UserModal from './components/UserModal';
 
@@ -196,19 +196,25 @@ const StudentsManagement = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#e53935] hover:bg-[#d32f2f] text-white text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all shadow-sm"
+            onClick={() => console.log('Import student cliicked')}
           >
-            <Plus size={16} />
+            <Upload size={18} />
+            Import
+          </button>
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            onClick={openAddModal}
+          >
+            <Plus size={18} />
             Add Student
           </button>
           <button
             type="button"
             onClick={fetchStudents}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all shadow-sm"
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             Refresh
           </button>
         </div>
