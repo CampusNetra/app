@@ -30,9 +30,16 @@ const getDashboardStats = async (dept_id) => {
   const [messages] = await pool.execute(
     `SELECT COUNT(*) as count FROM messages m
      LEFT JOIN channels c ON m.channel_id = c.id
-     WHERE date(m.created_at) = date("now") AND (c.dept_id = ? OR ? IS NULL)`,
+     WHERE m.created_at >= CURRENT_DATE AND (c.dept_id = ? OR ? IS NULL)`,
     [dept_id, dept_id]
-  );
+  ).catch(err => {
+    console.error('Messages Today Query Error:', err.message);
+    // Fallback if CURRENT_DATE is not supported or different
+    return pool.execute(
+       'SELECT COUNT(*) as count FROM messages m LEFT JOIN channels c ON m.channel_id = c.id WHERE date(m.created_at) = date("now") AND (c.dept_id = ? OR ? IS NULL)',
+       [dept_id, dept_id]
+    );
+  });
 
   // 6. Total Memberships
   const [memberships] = await pool.execute(
@@ -43,19 +50,30 @@ const getDashboardStats = async (dept_id) => {
   );
 
   // 7. Total Clubs
-  const [clubs] = await pool.execute(
-    'SELECT COUNT(*) as count FROM clubs WHERE (dept_id = ? OR ? IS NULL)',
-    [dept_id, dept_id]
-  );
+  let clubsResult = [{ count: 0 }];
+  try {
+    const [rows] = await pool.execute('SELECT COUNT(*) as count FROM clubs WHERE (dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
+    clubsResult = rows;
+  } catch (err) {
+    console.warn('Sync Warning: "clubs" table not found or query failed. Returning 0.');
+  }
+  const clubs = clubsResult;
 
   // 8. Pending Reports
-  const [reports] = await pool.execute(
-    `SELECT COUNT(*) as count FROM channel_reports r
-     JOIN messages m ON r.message_id = m.id
-     JOIN channels c ON m.channel_id = c.id
-     WHERE r.status = 'pending' AND (c.dept_id = ? OR ? IS NULL)`,
-    [dept_id, dept_id]
-  );
+  let reportsResult = [{ count: 0 }];
+  try {
+    const [rows] = await pool.execute(
+      `SELECT COUNT(*) as count FROM channel_reports r
+       JOIN messages m ON r.message_id = m.id
+       JOIN channels c ON m.channel_id = c.id
+       WHERE r.status = 'pending' AND (c.dept_id = ? OR ? IS NULL)`,
+      [dept_id, dept_id]
+    );
+    reportsResult = rows;
+  } catch (err) {
+    console.warn('Sync Warning: "channel_reports" or "messages" table not found.');
+  }
+  const reports = reportsResult;
 
   // 9. Suspended Users
   const [suspended] = await pool.execute(
@@ -65,14 +83,31 @@ const getDashboardStats = async (dept_id) => {
 
   // 10. Last 7 days message counts
   const [msgHistory] = await pool.execute(
-    `SELECT date(m.created_at) as date, COUNT(*) as count
+    `SELECT DATE(m.created_at) as date, COUNT(*) as count
      FROM messages m
      LEFT JOIN channels c ON m.channel_id = c.id
-     WHERE m.created_at >= date('now', '-7 days') AND (c.dept_id = ? OR ? IS NULL)
-     GROUP BY date(m.created_at)
+     WHERE m.created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY) 
+     GROUP BY DATE(m.created_at)
      ORDER BY date ASC`,
     [dept_id, dept_id]
-  );
+  ).catch(async (err) => {
+    try {
+      // Fallback for SQLite (D1)
+      const [rows] = await pool.execute(
+        `SELECT date(m.created_at) as date, COUNT(*) as count
+         FROM messages m
+         LEFT JOIN channels c ON m.channel_id = c.id
+         WHERE m.created_at >= date('now', '-7 days')
+         GROUP BY date(m.created_at)
+         ORDER BY date ASC`,
+        [dept_id, dept_id]
+      );
+      return [rows];
+    } catch (finalErr) {
+      console.warn('Sync Warning: "messages" table not found. Returning empty history.');
+      return [[]]; // Return empty rows
+    }
+  });
 
   return {
     totalStudents: students[0].count,
@@ -874,6 +909,94 @@ const updateUser = async ({ dept_id, userId, data }) => {
   return { message: 'User updated successfully' };
 };
 
+const importStudents = async ({ dept_id, students }) => {
+  const errors = [];
+  let successCount = 0;
+
+  // Pre-fetch sections for name to id mapping if section name is provided
+  const [sections] = await pool.execute('SELECT id, name FROM sections WHERE dept_id = ?', [dept_id]);
+  const sectionMap = sections.reduce((map, s) => {
+    map[s.name.toLowerCase()] = s.id;
+    return map;
+  }, {});
+
+  for (let i = 0; i < students.length; i++) {
+    const originalRow = students[i];
+    try {
+      const data = { ...originalRow };
+      
+      // Basic validations
+      if (!data.name) throw new Error('Name is required');
+      if (!data.reg_no) throw new Error('Registration Number is required');
+      if (!data.enrollment_no) throw new Error('Enrollment Number is required');
+      
+      // If student provides section name instead of ID
+      if (data.section && !data.section_id) {
+        const lowerSection = data.section.toLowerCase();
+        let matchedId = sectionMap[lowerSection];
+        
+        // Match just the suffix/number (e.g. "4" matching "MCA-4")
+        if (!matchedId) {
+          const possibleKey = Object.keys(sectionMap).find(k => 
+             k === lowerSection || 
+             k.endsWith(`-${lowerSection}`) || 
+             k.endsWith(` ${lowerSection}`) ||
+             (lowerSection.length > 0 && k.split('-').pop() === lowerSection)
+          );
+          if (possibleKey) matchedId = sectionMap[possibleKey];
+        }
+
+        if (!matchedId) {
+          throw new Error(`Section "${data.section}" not found in this department`);
+        }
+        data.section_id = matchedId;
+      }
+
+      await createStudent({ dept_id, data });
+      successCount++;
+    } catch (error) {
+      errors.push({ row: i + 1, message: error.message });
+    }
+  }
+
+  return {
+    total: students.length,
+    success: successCount,
+    errors
+  };
+};
+
+const importFaculty = async ({ dept_id, faculty }) => {
+  const errors = [];
+  let successCount = 0;
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  for (let i = 0; i < faculty.length; i++) {
+    const data = faculty[i];
+    try {
+      if (!data.name) throw new Error('Name is required');
+      if (!data.reg_no) throw new Error('Registration ID/Number is required');
+      if (!data.email) {
+        throw new Error('Email is required for faculty');
+      } else if (!emailRegex.test(data.email)) {
+        throw new Error(`Invalid email format: ${data.email}`);
+      }
+
+      await createFaculty({ dept_id, data });
+      successCount++;
+    } catch (error) {
+      errors.push({ row: i + 1, message: error.message });
+    }
+  }
+
+  return {
+    total: faculty.length,
+    success: successCount,
+    errors
+  };
+};
+
 module.exports = {
   getDashboardStats,
   getRecentAnnouncements,
@@ -906,4 +1029,6 @@ module.exports = {
   updateUser,
   updateStudent: updateUser,
   updateFaculty: updateUser,
+  importStudents,
+  importFaculty
 };

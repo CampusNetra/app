@@ -1,4 +1,6 @@
 const adminService = require('../../services/admin.service');
+const fs = require('fs');
+const csv = require('csv-parser');
 
 const getStats = async (req, res) => {
   try {
@@ -385,6 +387,46 @@ const updateFaculty = async (req, res) => {
   }
 };
 
+const importStudents = async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const { dept_id } = req.user;
+  const results = [];
+  
+  fs.createReadStream(req.file.path)
+    .pipe(csv())
+    .on('data', (data) => results.push(data))
+    .on('end', async () => {
+      try {
+        const importResult = await adminService.importStudents({ dept_id, students: results });
+        fs.unlinkSync(req.file.path); // Clean up
+        res.json(importResult);
+      } catch (error) {
+        fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: error.message });
+      }
+    });
+};
+
+const importFaculty = async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const { dept_id } = req.user;
+  const results = [];
+  
+  fs.createReadStream(req.file.path)
+    .pipe(csv())
+    .on('data', (data) => results.push(data))
+    .on('end', async () => {
+      try {
+        const importResult = await adminService.importFaculty({ dept_id, faculty: results });
+        fs.unlinkSync(req.file.path); // Clean up
+        res.json(importResult);
+      } catch (error) {
+        fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: error.message });
+      }
+    });
+};
+
 module.exports = {
   getStats,
   getAnnouncements,
@@ -415,5 +457,7 @@ module.exports = {
   createSubjectOffering,
   updateSubjectOffering,
   deleteSubjectOffering,
-  createAnnouncement
+  createAnnouncement,
+  importStudents,
+  importFaculty
 };

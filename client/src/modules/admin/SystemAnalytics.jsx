@@ -11,7 +11,8 @@ import {
   Loader2,
   RefreshCw,
   Clock,
-  ExternalLink
+  ExternalLink,
+  AlertCircle
 } from 'lucide-react';
 import api from '../../api';
 
@@ -20,6 +21,7 @@ const SystemAnalytics = () => {
   const [stats, setStats] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAnalytics();
@@ -27,15 +29,23 @@ const SystemAnalytics = () => {
 
   const fetchAnalytics = async () => {
     setLoading(true);
+    setError(null);
+    console.log('Fetching analytics for range:', timeRange);
+    
     try {
       const [statsRes, announcementsRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/announcements')
       ]);
+      
+      console.log('Stats Response:', statsRes.data);
+      console.log('Announcements Response:', announcementsRes.data);
+      
       setStats(statsRes.data);
       setAnnouncements(announcementsRes.data || []);
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
+      setError(err.response?.data?.error || err.message || 'Connection Error');
     } finally {
       setLoading(false);
     }
@@ -51,6 +61,51 @@ const SystemAnalytics = () => {
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-10 bg-slate-50/50">
+        <div className="text-center p-10 bg-white rounded-[2rem] border border-red-100 shadow-xl max-w-md">
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Sync Error</h3>
+          <p className="text-slate-500 mb-6">{error}</p>
+          <button 
+            onClick={fetchAnalytics}
+            className="px-6 py-2 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+          >
+            Retry Sync
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const generatePath = () => {
+    if (!stats?.messageHistory || stats.messageHistory.length === 0) {
+      return "M0,80 C100,80 200,80 400,80 L400,100 L0,100 Z";
+    }
+    
+    const data = stats.messageHistory.slice(-7);
+    const max = Math.max(...data.map(d => d.count), 1);
+    const points = data.map((d, i) => ({
+      x: (i / (data.length - 1)) * 400,
+      y: 80 - (d.count / max) * 60
+    }));
+
+    let d = `M${points[0].x},${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const curr = points[i];
+      const next = points[i + 1];
+      const cp1x = curr.x + (next.x - curr.x) / 2;
+      d += ` C${cp1x},${curr.y} ${cp1x},${next.y} ${next.x},${next.y}`;
+    }
+    
+    const fill = d + ` L400,100 L0,100 Z`;
+    const line = d;
+    return { fill, line };
+  };
+
+  const chartData = generatePath();
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-10 bg-slate-50/50 custom-scrollbar">
@@ -88,8 +143,8 @@ const SystemAnalytics = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { label: 'Total Users', value: stats?.totalUsers || 0, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-            { label: 'Active Today', value: stats?.messagesToday || 0, icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' },
-            { label: 'Total Clubs', value: stats?.totalClubs || 0, icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50' },
+            { label: 'Messages Today', value: stats?.messagesToday || 0, icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' },
+            { label: 'Active Clubs', value: stats?.totalClubs || 0, icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50' },
             { label: 'Total Reach', value: stats?.totalMemberships || 0, icon: Eye, color: 'text-emerald-500', bg: 'bg-emerald-50' }
           ].map((stat, i) => (
             <div key={i} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 group">
@@ -111,11 +166,12 @@ const SystemAnalytics = () => {
             <div className="flex items-center justify-between mb-10 relative z-10">
               <div>
                 <h5 className="text-lg font-black text-slate-900 tracking-tight">Messaging Activity</h5>
-                <p className="text-xs text-slate-400 font-medium mt-1">Volume of interactions across the network</p>
+                <p className="text-xs text-slate-400 font-medium mt-1">Growth of communication volume</p>
               </div>
-              <button className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center hover:text-slate-600 transition-colors">
-                <MoreHorizontal size={20} />
-              </button>
+              <div className="flex items-center gap-2 text-primary font-black text-xs">
+                <TrendingUp size={16} />
+                REAL-TIME
+              </div>
             </div>
             
             <div className="flex-1 min-h-[260px] flex flex-col justify-between relative z-10">
@@ -127,14 +183,13 @@ const SystemAnalytics = () => {
                         <stop offset="100%" stopColor="#ff6129" stopOpacity="0"></stop>
                     </linearGradient>
                     </defs>
-                    {/* Simplified Chart Path based on real data or fallback */}
                     <path 
                         fill="url(#chart-grad-real)" 
-                        d="M0,80 C50,70 100,90 150,40 C200,10 250,50 300,30 C350,20 400,60 400,60 L400,100 L0,100 Z"
+                        d={chartData.fill}
                         className="transition-all duration-1000"
                     />
                     <path 
-                        d="M0,80 C50,70 100,90 150,40 C200,10 250,50 300,30 C350,20 400,60" 
+                        d={chartData.line} 
                         fill="none" 
                         stroke="#ff6129" 
                         strokeWidth="4"
@@ -144,8 +199,10 @@ const SystemAnalytics = () => {
                 </svg>
               </div>
               <div className="flex justify-between mt-8 px-2">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                  <span key={day} className="text-[10px] text-slate-300 font-black uppercase tracking-widest">{day}</span>
+                {(stats?.messageHistory || []).slice(-7).map((d) => (
+                  <span key={d.date} className="text-[10px] text-slate-300 font-black uppercase tracking-widest">
+                    {new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' })}
+                  </span>
                 ))}
               </div>
             </div>
@@ -153,83 +210,87 @@ const SystemAnalytics = () => {
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
           </div>
 
-          {/* Messages Volume - Bar Chart */}
+          {/* Interaction Load - Bar Chart */}
           <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-10">
               <div>
                 <h5 className="text-lg font-black text-slate-900 tracking-tight">Interaction Load</h5>
-                <p className="text-xs text-slate-400 font-medium mt-1">Student activity trends per session</p>
+                <p className="text-xs text-slate-400 font-medium mt-1">Daily engagement intensity</p>
               </div>
               <div className="flex gap-3">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" /> Real-time
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" /> Live Stats
                 </div>
               </div>
             </div>
             
             <div className="flex-1 min-h-[260px] flex items-end justify-between gap-6 px-4">
-              {[60, 85, 45, 95, 70, 30, 20].map((h, idx) => (
-                <div key={idx} className="flex flex-col flex-1 items-center gap-4 group/bar">
-                  <div className="w-full bg-slate-50 rounded-2xl relative h-48 overflow-hidden">
-                    <div 
-                        className="absolute bottom-0 w-full bg-slate-900 rounded-2xl transition-all duration-1000 ease-out group-hover/bar:bg-primary"
-                        style={{ height: `${h}%` }}
-                    />
+              {((stats?.messageHistory || []).slice(-7)).map((d, idx) => {
+                const max = Math.max(...stats.messageHistory.map(m => m.count), 1);
+                const h = (d.count / max) * 100;
+                return (
+                  <div key={idx} className="flex flex-col flex-1 items-center gap-4 group/bar">
+                    <div className="w-full bg-slate-50 rounded-2xl relative h-48 overflow-hidden">
+                      <div 
+                          className="absolute bottom-0 w-full bg-slate-900 rounded-2xl transition-all duration-700 ease-out group-hover/bar:bg-primary"
+                          style={{ height: `${Math.max(h, 5)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">
+                      {new Date(d.date).toLocaleDateString(undefined, { weekday: 'narrow' })}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">
-                    {['M', 'T', 'W', 'T', 'F', 'S', 'S'][idx]}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Second Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pb-12">
-          {/* Club Distribution */}
-          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+          {/* Club Engagement */}
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500">
             <div className="flex flex-col mb-10">
-              <h5 className="text-lg font-black text-slate-900 tracking-tight">Club Engagement</h5>
-              <p className="text-xs text-slate-400 font-medium mt-1">Distribution of active chapters</p>
+              <h5 className="text-lg font-black text-slate-900 tracking-tight">Campus Engagement</h5>
+              <p className="text-xs text-slate-400 font-medium mt-1">Activity across student groups</p>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="relative w-48 h-48">
-                <svg className="w-full h-full -rotate-90 group" viewBox="0 0 36 36">
+              <div className="relative w-48 h-48 group">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                   <circle className="stroke-slate-50" cx="18" cy="18" fill="none" r="16" strokeWidth="4"></circle>
                   <circle 
                     className="stroke-primary transition-all duration-1000" 
                     cx="18" cy="18" fill="none" r="16" 
-                    strokeDasharray={`${Math.min(100, (stats?.totalClubs || 0) * 5)}, 100`} 
+                    strokeDasharray={`${Math.min(100, (stats?.totalClubs || 0) * 10)}, 100`} 
                     strokeLinecap="round" strokeWidth="4">
                   </circle>
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-4xl font-black text-slate-900">{stats?.totalClubs || 0}</span>
-                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">Active</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                  <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats?.totalClubs || 0}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">Clubs</span>
                 </div>
               </div>
               
-              <div className="w-full mt-12 space-y-4">
+              <div className="w-full mt-12 space-y-3">
                 {[
-                    { label: 'Technical', val: '45%', color: 'bg-primary' },
-                    { label: 'Cultural', val: '30%', color: 'bg-slate-400' },
-                    { label: 'Others', val: '25%', color: 'bg-slate-200' }
+                    { label: 'Active Channels', val: stats?.totalChannels || 0, color: 'bg-primary' },
+                    { label: 'Total Memberships', val: stats?.totalMemberships || 0, color: 'bg-slate-900' },
+                    { label: 'Dept Sections', val: stats?.activeSections || 0, color: 'bg-slate-200' }
                 ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-colors">
+                    <div key={i} className="flex items-center justify-between p-5 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-all group/item">
                         <div className="flex items-center gap-3">
-                            <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
+                            <div className={`w-2.5 h-2.5 rounded-full ${item.color} group-hover/item:scale-150 transition-transform`} />
                             <span className="text-xs font-black text-slate-700 uppercase tracking-widest">{item.label}</span>
                         </div>
-                        <span className="text-xs font-black text-slate-400">{item.val}</span>
+                        <span className="text-sm font-black text-slate-400">{item.val.toLocaleString()}</span>
                     </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Announcements Posted - Feed Style */}
+          {/* Announcements Posted */}
           <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -248,9 +309,9 @@ const SystemAnalytics = () => {
             <div className="flex-1">
               <div className="grid grid-cols-1 gap-4">
                 {announcements.length > 0 ? announcements.map((ann, i) => (
-                    <div key={i} className="flex items-center justify-between p-6 rounded-[2rem] border border-slate-50 hover:bg-slate-50 transition-all group">
+                    <div key={i} className="flex items-center justify-between p-6 rounded-[2rem] border border-slate-50 hover:bg-slate-100 transition-all hover:-translate-x-2 group">
                         <div className="flex items-center gap-5">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors duration-500 shadow-lg">
                                 <Clock size={20} />
                             </div>
                             <div className="flex flex-col">
@@ -264,18 +325,18 @@ const SystemAnalytics = () => {
                         </div>
                         <div className="flex items-center gap-6">
                             <div className="flex flex-col items-end">
-                                <span className="text-xs font-black text-slate-900">{ann.reach?.toLocaleString() || 0}</span>
+                                <span className="text-sm font-black text-slate-900">{ann.reach?.toLocaleString() || 0}</span>
                                 <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Reach</span>
                             </div>
                             <div className="w-px h-10 bg-slate-100" />
-                            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-primary transition-colors">
+                            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-300 hover:text-primary transition-colors cursor-pointer group-hover:shadow-md">
                                 <Eye size={18} />
                             </div>
                         </div>
                     </div>
                 )) : (
-                    <div className="py-20 text-center">
-                        <p className="text-slate-400 font-medium italic">No recent announcements found.</p>
+                    <div className="py-20 text-center bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
+                        <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">No recent announcements found.</p>
                     </div>
                 )}
               </div>

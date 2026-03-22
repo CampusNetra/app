@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('./admin.controller');
 const authMiddleware = require('../../utils/auth.middleware');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
 router.get('/stats', authMiddleware, adminController.getStats);
 router.get('/announcements', authMiddleware, adminController.getAnnouncements);
@@ -26,6 +28,10 @@ router.post('/offerings/assign-faculty', authMiddleware, adminController.createS
 router.put('/offerings/:id', authMiddleware, adminController.updateSubjectOffering);
 router.delete('/offerings/:id', authMiddleware, adminController.deleteSubjectOffering);
 router.post('/announcements', authMiddleware, adminController.createAnnouncement);
+
+// Bulk Import
+router.post('/import-students', authMiddleware, upload.single('file'), adminController.importStudents);
+router.post('/import-faculty', authMiddleware, upload.single('file'), adminController.importFaculty);
 
 // Clubs
 router.get('/clubs', authMiddleware, adminController.getClubs);
