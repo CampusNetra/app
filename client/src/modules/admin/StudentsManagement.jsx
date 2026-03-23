@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { RefreshCw, Search, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { RefreshCw, Search, ChevronLeft, ChevronRight, Plus, Upload } from 'lucide-react';
 import api from '../../api';
-import AddUserModal from './components/AddUserModal';
+import UserModal from './components/UserModal';
 
 const StudentsManagement = () => {
   const [students, setStudents] = useState([]);
@@ -17,8 +17,10 @@ const StudentsManagement = () => {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [studentToEdit, setStudentToEdit] = useState(null);
 
   const limit = 20;
 
@@ -74,8 +76,15 @@ const StudentsManagement = () => {
   };
 
   const openAddModal = () => {
+    setStudentToEdit(null);
     setCreateError('');
     setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (student) => {
+    setStudentToEdit(student);
+    setCreateError('');
+    setIsEditModalOpen(true);
   };
 
   const handleCreateStudent = async (payload) => {
@@ -88,6 +97,21 @@ const StudentsManagement = () => {
     } catch (err) {
       console.error('Error creating student:', err);
       setCreateError(err.response?.data?.error || 'Failed to create student');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const handleUpdateStudent = async (payload) => {
+    setCreatingUser(true);
+    setCreateError('');
+    try {
+      await api.put(`/admin/students/${studentToEdit.id}`, payload);
+      setIsEditModalOpen(false);
+      await fetchStudents();
+    } catch (err) {
+      console.error('Error updating student:', err);
+      setCreateError(err.response?.data?.error || 'Failed to update student');
     } finally {
       setCreatingUser(false);
     }
@@ -172,19 +196,25 @@ const StudentsManagement = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#e53935] hover:bg-[#d32f2f] text-white text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all shadow-sm"
+            onClick={() => console.log('Import student cliicked')}
           >
-            <Plus size={16} />
+            <Upload size={18} />
+            Import
+          </button>
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            onClick={openAddModal}
+          >
+            <Plus size={18} />
             Add Student
           </button>
           <button
             type="button"
             onClick={fetchStudents}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all shadow-sm"
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             Refresh
           </button>
         </div>
@@ -268,12 +298,13 @@ const StudentsManagement = () => {
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Verification</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Access</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Joined</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="text-center py-8">
+                  <td colSpan="9" className="text-center py-8">
                     <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
                   </td>
                 </tr>
@@ -300,11 +331,20 @@ const StudentsManagement = () => {
                     <td className="px-6 py-4 text-sm">{renderVerificationBadge(student.verification_status)}</td>
                     <td className="px-6 py-4 text-sm">{renderAccessBadge(student.is_active)}</td>
                     <td className="px-6 py-4 text-right text-sm text-slate-500">{formatDate(student.created_at)}</td>
+                    <td className="px-6 py-4 text-right">
+                       <button
+                         type="button"
+                         onClick={() => openEditModal(student)}
+                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300 active:scale-95"
+                       >
+                         Edit
+                       </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-8 text-slate-500">No students found</td>
+                  <td colSpan="9" className="text-center py-8 text-slate-500">No students found</td>
                 </tr>
               )}
             </tbody>
@@ -340,14 +380,18 @@ const StudentsManagement = () => {
         </div>
       </div>
 
-      <AddUserModal
-        isOpen={isAddModalOpen}
+      <UserModal
+        isOpen={isAddModalOpen || isEditModalOpen}
         role="student"
         sections={sections}
         loading={creatingUser}
         error={createError}
-        onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleCreateStudent}
+        user={studentToEdit}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+        }}
+        onSubmit={studentToEdit ? handleUpdateStudent : handleCreateStudent}
       />
     </div>
   );

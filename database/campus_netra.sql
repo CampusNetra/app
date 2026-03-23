@@ -3,8 +3,10 @@ PRAGMA foreign_keys = OFF;
 
 -- Drop tables in reverse dependency order
 DROP TABLE IF EXISTS otp_codes;
+DROP TABLE IF EXISTS channel_reports;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS channel_members;
+DROP TABLE IF EXISTS clubs;
 DROP TABLE IF EXISTS channels;
 DROP TABLE IF EXISTS subject_offerings;
 DROP TABLE IF EXISTS subjects;
@@ -116,7 +118,7 @@ CREATE TABLE channels (
 
     name TEXT NOT NULL,
 
-    type TEXT NOT NULL CHECK(type IN ('branch', 'section', 'subject')),
+    type TEXT NOT NULL CHECK(type IN ('branch', 'section', 'subject', 'announcement', 'club', 'global')),
 
     dept_id INTEGER,
     section_id INTEGER,
@@ -149,7 +151,23 @@ CREATE TABLE channel_members (
 );
 
 -- =========================
--- 9. messages
+-- 9. clubs
+-- =========================
+CREATE TABLE clubs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    category TEXT,
+    dept_id INTEGER,
+    channel_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (dept_id) REFERENCES departments(id) ON DELETE CASCADE,
+    FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE
+);
+
+-- =========================
+-- 10. messages
 -- =========================
 CREATE TABLE messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -173,7 +191,22 @@ CREATE TABLE messages (
 );
 
 -- =========================
--- 10. otp_codes
+-- 11. channel_reports
+-- =========================
+CREATE TABLE channel_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id INTEGER,
+    reporter_id INTEGER,
+    reason TEXT,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'resolved', 'dismissed')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- =========================
+-- 12. otp_codes
 -- =========================
 CREATE TABLE otp_codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -205,7 +238,7 @@ CREATE INDEX idx_messages_parent ON messages(parent_id);
 
 CREATE INDEX idx_subject_offerings_section ON subject_offerings(section_id);
 
--- Trigger for updated_at in users table (since SQLite doesn't support ON UPDATE directly)
+-- Trigger for updated_at in users table
 CREATE TRIGGER IF NOT EXISTS trigger_users_updated_at 
 AFTER UPDATE ON users
 FOR EACH ROW

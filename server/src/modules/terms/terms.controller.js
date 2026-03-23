@@ -27,8 +27,28 @@ const updateActiveTerm = async (req, res) => {
   }
 };
 
+const updateTerm = async (req, res) => {
+  try {
+    const term = await termsService.updateTerm(req.params.id, req.body);
+    res.json(term);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const deleteTerm = async (req, res) => {
+  try {
+    await termsService.deleteTerm(req.params.id);
+    res.json({ message: 'Term deleted successfully' });
+  } catch (error) {
+    res.status(error.message === 'Term not found' ? 404 : 400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getTerms,
   addTerm,
-  updateActiveTerm
+  updateActiveTerm,
+  updateTerm,
+  deleteTerm
 };
