@@ -112,8 +112,316 @@ export default {
 
         if (path === '/api/admin/channels' && request.method === 'GET') {
             try {
-                const data = await adminService.getChannels(user.dept_id);
+                const data = await adminService.getChannels(user.dept_id, url.searchParams.get('type'));
                 return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/faculty' && request.method === 'GET') {
+            try {
+                const params = url.searchParams;
+                const data = await adminService.getFaculty({
+                    dept_id: user.dept_id,
+                    search: params.get('search') || '',
+                    is_active: params.get('is_active'),
+                    page: params.get('page') || 1,
+                    limit: params.get('limit') || 20
+                });
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/faculty' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.createFaculty({
+                    dept_id: user.dept_id,
+                    data: body
+                });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                const message = e.message || 'Failed to create faculty';
+                const statusCode =
+                    message.includes('required') ||
+                    message.includes('already') ||
+                    message.includes('Invalid')
+                        ? 400
+                        : 500;
+                return jsonResponse({ error: message }, statusCode);
+            }
+        }
+
+        const updateFacultyMatch = path.match(/^\/api\/admin\/faculty\/(\d+)$/);
+        if (updateFacultyMatch && request.method === 'PUT') {
+            try {
+                const body = await request.json();
+                const result = await adminService.updateUser({
+                    dept_id: user.dept_id,
+                    userId: updateFacultyMatch[1],
+                    data: body
+                });
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse(
+                    { error: e.message },
+                    e.message === 'User not found in this department' ? 404 : 500
+                );
+            }
+        }
+
+        if (path === '/api/admin/students' && request.method === 'GET') {
+            try {
+                const params = url.searchParams;
+                const data = await adminService.getStudents({
+                    dept_id: user.dept_id,
+                    search: params.get('search') || '',
+                    section_id: params.get('section_id'),
+                    verification_status: params.get('verification_status'),
+                    is_active: params.get('is_active'),
+                    page: params.get('page') || 1,
+                    limit: params.get('limit') || 20
+                });
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/students' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.createStudent({
+                    dept_id: user.dept_id,
+                    data: body
+                });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                const message = e.message || 'Failed to create student';
+                const statusCode =
+                    message.includes('required') ||
+                    message.includes('already') ||
+                    message.includes('Invalid')
+                        ? 400
+                        : 500;
+                return jsonResponse({ error: message }, statusCode);
+            }
+        }
+
+        const updateStudentMatch = path.match(/^\/api\/admin\/students\/(\d+)$/);
+        if (updateStudentMatch && request.method === 'PUT') {
+            try {
+                const body = await request.json();
+                const result = await adminService.updateUser({
+                    dept_id: user.dept_id,
+                    userId: updateStudentMatch[1],
+                    data: body
+                });
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse(
+                    { error: e.message },
+                    e.message === 'User not found in this department' ? 404 : 500
+                );
+            }
+        }
+
+        if (path === '/api/admin/departments' && request.method === 'GET') {
+            try {
+                const deptIdToFetch = user.role === 'super_admin' ? null : user.dept_id;
+                const data = await adminService.getDepartments(deptIdToFetch);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/departments' && request.method === 'POST') {
+            try {
+                if (user.role !== 'super_admin') {
+                    return jsonResponse({ error: 'Only super admins can create departments' }, 403);
+                }
+                const body = await request.json();
+                const result = await adminService.createDepartment(body.name);
+                return jsonResponse(result, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/sections' && request.method === 'GET') {
+            try {
+                const data = await adminService.getSections(user.dept_id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/sections' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.createSection({ dept_id: user.dept_id, name: body.name });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/subjects' && request.method === 'GET') {
+            try {
+                const data = await adminService.getSubjects(user.dept_id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/subjects' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.createSubject({ dept_id: user.dept_id, name: body.name });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const subjectMatch = path.match(/^\/api\/admin\/subjects\/(\d+)$/);
+        if (subjectMatch && request.method === 'PUT') {
+            try {
+                const body = await request.json();
+                const result = await adminService.updateSubject(user.dept_id, subjectMatch[1], body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, e.message === 'Subject not found' ? 404 : 500);
+            }
+        }
+
+        if (subjectMatch && request.method === 'DELETE') {
+            try {
+                const result = await adminService.deleteSubject(user.dept_id, subjectMatch[1]);
+                return jsonResponse(result);
+            } catch (e) {
+                if ((e.message || '').includes('active faculty assignments')) {
+                    return jsonResponse({ error: e.message }, 400);
+                }
+                return jsonResponse({ error: e.message }, e.message === 'Subject not found' ? 404 : 500);
+            }
+        }
+
+        if (path === '/api/admin/offerings' && request.method === 'GET') {
+            try {
+                const data = await adminService.getSubjectOfferings(user.dept_id, url.searchParams.get('section_id'));
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/offerings/assign-faculty' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.createSubjectOffering({
+                    subject_id: body.subject_id,
+                    section_id: body.section_id,
+                    faculty_id: body.faculty_id,
+                    term_id: body.term_id,
+                    dept_id: user.dept_id
+                });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const offeringMatch = path.match(/^\/api\/admin\/offerings\/(\d+)$/);
+        if (offeringMatch && request.method === 'PUT') {
+            try {
+                const body = await request.json();
+                const result = await adminService.updateSubjectOffering(user.dept_id, offeringMatch[1], body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, e.message === 'Offering not found' ? 404 : 500);
+            }
+        }
+
+        if (offeringMatch && request.method === 'DELETE') {
+            try {
+                const result = await adminService.deleteSubjectOffering(user.dept_id, offeringMatch[1]);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, e.message === 'Offering not found' ? 404 : 500);
+            }
+        }
+
+        if (path === '/api/admin/clubs' && request.method === 'GET') {
+            try {
+                const data = await adminService.getClubs(user.dept_id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/clubs' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.createClub({ dept_id: user.dept_id, ...body });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const clubMatch = path.match(/^\/api\/admin\/clubs\/(\d+)$/);
+        if (clubMatch && request.method === 'PUT') {
+            try {
+                const body = await request.json();
+                const result = await adminService.updateClub(clubMatch[1], body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (clubMatch && request.method === 'DELETE') {
+            try {
+                const result = await adminService.deleteClub(clubMatch[1]);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/reports' && request.method === 'GET') {
+            try {
+                const data = await adminService.getReports(user.dept_id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const resolveReportMatch = path.match(/^\/api\/admin\/reports\/(\d+)\/resolve$/);
+        if (resolveReportMatch && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.resolveReport(resolveReportMatch[1], body.action);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const deleteChannelMatch = path.match(/^\/api\/admin\/channels\/(\d+)$/);
+        if (deleteChannelMatch && request.method === 'DELETE') {
+            try {
+                const result = await adminService.deleteChannel(deleteChannelMatch[1]);
+                return jsonResponse(result);
             } catch (e) {
                 return jsonResponse({ error: e.message }, 500);
             }
