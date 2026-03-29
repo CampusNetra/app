@@ -57,6 +57,22 @@ const execute = async (sql, params = []) => {
   return getNodePool().execute(sql, params);
 };
 
+const query = async (sql, params = []) => {
+  if (getD1Binding()) {
+    return executeOnD1(sql, params);
+  }
+  return getNodePool().query(sql, params);
+};
+
+const getConnection = async () => {
+  if (getD1Binding()) {
+    throw new Error('getConnection is not supported on D1');
+  }
+  return getNodePool().getConnection();
+};
+
 module.exports = {
-  execute
+  execute,
+  query,
+  getConnection
 };

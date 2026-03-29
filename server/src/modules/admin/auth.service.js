@@ -105,48 +105,43 @@ const login = async (data) => {
 };
 
 const studentLogin = async (data) => {
-  const regNo = data?.reg_no?.trim();
-  const enrollmentNo = data?.enrollment_no?.trim();
+  const { identifier, password } = data;
 
-  if (!regNo || !enrollmentNo) {
-    throw new Error('Registration Number and Enrollment Number are required');
+  if (!identifier || !password) {
+    throw new Error('Registration Number and Password are required');
   }
 
   const [users] = await pool.execute(
-    `SELECT
-      u.id,
-      u.name,
-      u.email,
-      u.reg_no,
-      u.enrollment_no,
-      u.role,
-      u.dept_id,
-      u.section_id,
-      u.is_active,
-      u.verification_status,
-      d.name AS dept_name,
-      s.name AS section_name
-    FROM users u
-    LEFT JOIN departments d ON d.id = u.dept_id
-    LEFT JOIN sections s ON s.id = u.section_id
-    WHERE u.role = 'student' AND u.reg_no = ? AND u.enrollment_no = ?
-    LIMIT 1`,
-    [regNo, enrollmentNo]
+    `SELECT u.*, d.name AS dept_name, s.name AS section_name 
+     FROM users u 
+     LEFT JOIN departments d ON d.id = u.dept_id 
+     LEFT JOIN sections s ON s.id = u.section_id 
+     WHERE u.role = 'student' AND (u.reg_no = ? OR u.name = ?)
+     LIMIT 1`,
+    [identifier.trim(), identifier.trim()]
   );
 
   if (users.length === 0) {
-    throw new Error('No matching student record found. Please check your Registration Number and Enrollment Number.');
+    throw new Error('No student record found. Please register first.');
   }
 
   const student = users[0];
+
+  if (Number(student.has_logged_in) === 0) {
+    // Custom error code or flag to trigger modal
+    const err = new Error('You need to create your account password first.');
+    err.code = 'NEED_REGISTRATION';
+    throw err;
+  }
+
   if (Number(student.is_active) === 0) {
     throw new Error('Your account is currently inactive. Please contact your department admin.');
   }
 
-  await pool.execute(
-    'UPDATE users SET has_logged_in = 1 WHERE id = ? AND role = ?',
-    [student.id, 'student']
-  );
+  const isMatch = await bcrypt.compare(password, student.password);
+  if (!isMatch) {
+    throw new Error('Incorrect password');
+  }
 
   const token = jwt.sign(
     { id: student.id, role: student.role, dept_id: student.dept_id, section_id: student.section_id },
@@ -172,8 +167,52 @@ const studentLogin = async (data) => {
   };
 };
 
+const studentRegisterCheck = async (data) => {
+  const regNo = data?.reg_no?.trim();
+  const enrollmentNo = data?.enrollment_no?.trim();
+
+  if (!regNo || !enrollmentNo) {
+    throw new Error('Registration Number and Enrollment Number are required to find your record.');
+  }
+
+  const [users] = await pool.execute(
+    'SELECT id, name, has_logged_in FROM users WHERE role = "student" AND reg_no = ? AND enrollment_no = ?',
+    [regNo, enrollmentNo]
+  );
+
+  if (users.length === 0) {
+    throw new Error('No record found matching these details. Please contact your admin.');
+  }
+
+  const student = users[0];
+  if (student.has_logged_in) {
+    throw new Error('Account already registered. Please login with your password.');
+  }
+
+  return { student_id: student.id, name: student.name };
+};
+
+const studentSetPassword = async (data) => {
+  const { student_id, password } = data;
+
+  if (!student_id || !password) {
+    throw new Error('Invalid registration data');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await pool.execute(
+    'UPDATE users SET password = ?, has_logged_in = 1, verification_status = "verified" WHERE id = ? AND role = "student"',
+    [hashedPassword, student_id]
+  );
+
+  return { success: true, message: 'Password created successfully. You can now login.' };
+};
+
 module.exports = {
   signup,
   login,
-  studentLogin
+  studentLogin,
+  studentRegisterCheck,
+  studentSetPassword
 };

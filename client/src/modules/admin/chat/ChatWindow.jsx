@@ -181,7 +181,7 @@ const ChatWindow = ({
             <h2>{channel.name}</h2>
             <p>
               {channel.member_count || 0} members · {socketConnected ? 'live updates' : 'polling fallback'}
-              <span className="header-unresolved-pill">{unresolvedCount} unresolved</span>
+              {/* <span className="header-unresolved-pill">{unresolvedCount} unresolved</span> */}
             </p>
           </div>
         </div>
@@ -228,12 +228,6 @@ const ChatWindow = ({
                     <MessageCircle size={13} />
                     {msg.reply_count ? `${msg.reply_count} replies` : 'Reply in thread'}
                   </button>
-                  {msg.reply_count > 0 && (
-                    <button className={`message-inline-btn ${isResolved ? 'resolved' : ''}`} onClick={() => toggleThreadResolved(msg.id)}>
-                      <BadgeCheck size={13} />
-                      {isResolved ? 'Resolved' : 'Mark Resolved'}
-                    </button>
-                  )}
                 </div>
               </div>
             </div>

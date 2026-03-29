@@ -8,8 +8,8 @@ const StudentLogin = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    regNo: '',
-    enrollmentNo: ''
+    reg_no: '',
+    enrollment_no: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -41,7 +41,7 @@ const StudentLogin = () => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const performLogin = async (regNo, enrollmentNo, name) => {
+  const performRegistrationCheck = async (regNo, enrollmentNo, name) => {
     setError('');
     setIsSubmitting(true);
 
@@ -51,31 +51,19 @@ const StudentLogin = () => {
         enrollment_no: enrollmentNo.trim()
       };
 
-      const response = await api.post('/auth/student-login', payload);
-      const { user, token } = response.data || {};
+      const response = await api.post('/auth/student-register-check', payload);
+      const studentData = response.data;
 
-      if (!token) {
-        setError('Login failed: No authentication token received');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Save credentials to localStorage for future logins
-      localStorage.setItem('student_login', JSON.stringify({
-        name: name.trim(),
-        regNo: regNo.trim(),
-        enrollmentNo: enrollmentNo.trim()
-      }));
-
-      sessionStorage.setItem('student_user', JSON.stringify({
-        ...user,
-        entered_name: name.trim()
-      }));
-      sessionStorage.setItem('student_token', token);
-
-      navigate('/student/splash');
+      // Navigate to the next page to create password
+      navigate('/student/signup', { 
+        state: { 
+          step: 2, 
+          student_id: studentData.student_id, 
+          name: studentData.name 
+        } 
+      });
     } catch (err) {
-      const message = err?.response?.data?.error || 'Unable to verify your details. Please try again.';
+      const message = err?.response?.data?.error || 'No matching record found. Please check your details.';
       setError(message);
       setIsSubmitting(false);
     }
@@ -85,17 +73,17 @@ const StudentLogin = () => {
     if (e?.preventDefault) {
       e.preventDefault();
     }
-    await performLogin(formData.regNo, formData.enrollmentNo, formData.name);
+    await performRegistrationCheck(formData.reg_no, formData.enrollment_no, formData.name);
   };
 
   return (
     <div className="st-shell">
       <div className="st-mobile-frame">
         <header className="st-topbar">
-          <button className="st-icon-btn" onClick={() => navigate('/student/splash')}>
+          <button className="st-icon-btn" onClick={() => navigate('/student/welcome')}>
             <ArrowLeft size={28} />
           </button>
-          <h2 className="st-login-title">Student Login</h2>
+          <h2 className="st-login-title">Student Registration</h2>
           <span style={{ width: 36 }} />
         </header>
 
@@ -105,7 +93,7 @@ const StudentLogin = () => {
               <GraduationCap size={54} />
             </div>
             <h1>Campus Netra</h1>
-            <p>Your details will be verified using your university email.</p>
+            <p>Enter your details to find your record and activate your account.</p>
           </div>
 
           <form onSubmit={handleContinue}>
@@ -123,8 +111,8 @@ const StudentLogin = () => {
               <label>Registration Number</label>
               <input
                 placeholder="e.g. REG123456"
-                value={formData.regNo}
-                onChange={(e) => handleChange('regNo', e.target.value)}
+                value={formData.reg_no}
+                onChange={(e) => handleChange('reg_no', e.target.value)}
                 required
               />
             </div>
@@ -133,8 +121,8 @@ const StudentLogin = () => {
               <label>Enrollment Number</label>
               <input
                 placeholder="e.g. ENR789012"
-                value={formData.enrollmentNo}
-                onChange={(e) => handleChange('enrollmentNo', e.target.value)}
+                value={formData.enrollment_no}
+                onChange={(e) => handleChange('enrollment_no', e.target.value)}
                 required
               />
             </div>
@@ -155,21 +143,8 @@ const StudentLogin = () => {
           </Link>
 
           <footer className="st-login-footer">
-            <div className="st-login-footer-links">
-              <Link to="/">Home</Link>
-              <Link to="/support">Support</Link>
-              <Link to="/privacy-policy">Privacy Policy</Link>
-              <Link to="/terms-of-service">Terms of Service</Link>
-            </div>
             <p className="st-login-footer-copy">© {new Date().getFullYear()} Campus Netra</p>
-            <a
-              className="st-login-footer-builder"
-              href="https://syntax-sinners.github.io/web"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Built by Syntax-Sinners for Galgotias University
-            </a>
+            <p className="st-login-footer-builder">Designed & Developed by Syntax Sinners</p>
           </footer>
         </main>
       </div>

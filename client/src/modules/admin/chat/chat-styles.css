@@ -318,8 +318,9 @@
 }
 
 .outgoing .message-bubble {
-  background-color: #f97316;
-  color: white;
+  background-color: #fcece0; /* Lighter, soft orange */
+  color: #c2410c; /* High contrast dark text for lighter background */
+  border: 1px solid #fdba7440;
   border-top-right-radius: 4px;
 }
 
@@ -339,7 +340,7 @@
 }
 
 .outgoing .message-meta {
-  color: rgba(255, 255, 255, 0.8);
+  color: #ea580c80;
 }
 
 .chat-input-area {
@@ -367,20 +368,6 @@
   padding: 12px 0;
   outline: none;
   font-size: 14px;
-}
-
-.chat-send-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: #f97316;
-  color: white;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
 .chat-send-btn:hover {
@@ -452,8 +439,18 @@
 }
 
 .announcement-bubble {
-  background: #fff8ef;
-  border: 1px solid #fed7aa;
+  background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%); /* Bolder, premium dark orange */
+  border: none;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(194, 65, 12, 0.15);
+}
+
+.announcement-bubble * {
+  color: white !important;
+}
+
+.announcement-bubble .message-meta {
+  color: #ffedd5a0 !important;
 }
 
 .announcement-tag {
@@ -461,12 +458,15 @@
   gap: 6px;
   align-items: center;
   font-size: 11px;
-  font-weight: 700;
-  color: #b45309;
-  background: #ffedd5;
+  font-weight: 800;
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
   border-radius: 999px;
   padding: 4px 10px;
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(4px);
 }
 
 .message-type-pill {
@@ -487,7 +487,7 @@
 .message-inline-btn {
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #555555;
   cursor: pointer;
   display: inline-flex;
   gap: 4px;
@@ -498,11 +498,11 @@
 }
 
 .outgoing .message-inline-btn {
-  color: rgba(255, 255, 255, 0.94);
+  color: rgba(86, 86, 86, 0.94);
 }
 
 .outgoing .message-inline-btn.resolved {
-  color: #ffffff;
+  color: #505050;
 }
 
 .header-unresolved-pill {

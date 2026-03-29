@@ -27,8 +27,28 @@ const studentLogin = async (req, res) => {
   }
 };
 
+const studentRegisterCheck = async (req, res) => {
+  try {
+    const result = await authService.studentRegisterCheck(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const studentSetPassword = async (req, res) => {
+  try {
+    const result = await authService.studentSetPassword(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
   login,
-  studentLogin
+  studentLogin,
+  studentRegisterCheck,
+  studentSetPassword
 };

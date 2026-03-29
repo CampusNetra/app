@@ -9,6 +9,7 @@ router.get('/stats', authMiddleware, adminController.getStats);
 router.get('/announcements', authMiddleware, adminController.getAnnouncements);
 router.get('/activity', authMiddleware, adminController.getActivity);
 router.get('/channels', authMiddleware, adminController.getChannels);
+router.post('/channels', authMiddleware, adminController.createChannel);
 router.get('/students', authMiddleware, adminController.getStudents);
 router.get('/faculty', authMiddleware, adminController.getFaculty);
 router.post('/students', authMiddleware, adminController.createStudent);
@@ -43,6 +44,8 @@ router.delete('/clubs/:id', authMiddleware, adminController.deleteClub);
 router.get('/reports', authMiddleware, adminController.getReports);
 router.post('/reports/:id/resolve', authMiddleware, adminController.resolveReport);
 router.delete('/channels/:id', authMiddleware, adminController.deleteChannel);
+router.get('/channels/eligible-users', authMiddleware, adminController.getChannelEligibleUsers);
+router.post('/channels/:id/members', authMiddleware, adminController.syncChannelMembers);
 
 // Chat System
 router.get('/chat/channels', authMiddleware, adminController.getChatChannels);

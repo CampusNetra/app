@@ -28,9 +28,9 @@ const ChatSidebar = ({ channels, activeChannel, onSelectChannel, searchTerm, set
     <aside className="chat-sidebar">
       <div className="chat-sidebar-header">
         <div className="chat-header-top">
-          <button className="chat-icon-btn"><MoreVertical size={20} /></button>
+          {/* <button className="chat-icon-btn"><MoreVertical size={20} /></button> */}
           <h1>Chats</h1>
-          <button className="chat-icon-btn"><Edit3 size={20} /></button>
+          {/* <button className="chat-icon-btn"><Edit3 size={20} /></button> */}
         </div>
         <div className="chat-search-wrap">
           <Search size={18} color="#94a3b8" />
