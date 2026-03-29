@@ -476,9 +476,117 @@ const getSubjectOfferings = async (dept_id, section_id) => {
   return rows;
 };
 
+const getSubjectOfferingContext = async (offeringId, dept_id) => {
+  const [rows] = await pool.execute(
+    `SELECT
+      so.*,
+      s.name AS subject_name,
+      s.dept_id AS subject_dept_id,
+      sec.name AS section_name,
+      u.name AS faculty_name,
+      t.name AS term_name
+    FROM subject_offerings so
+    JOIN subjects s ON s.id = so.subject_id
+    JOIN sections sec ON sec.id = so.section_id
+    LEFT JOIN users u ON u.id = so.faculty_id
+    LEFT JOIN terms t ON t.id = so.term_id
+    WHERE so.id = ? AND s.dept_id = ?`,
+    [offeringId, dept_id]
+  );
+
+  if (!rows[0]) {
+    throw new Error('Offering not found');
+  }
+
+  return rows[0];
+};
+
+const buildSubjectChannelName = ({ subject_name, section_name }) => `${subject_name} (${section_name})`;
+
+const syncSubjectChannelMembers = async ({ channel_id, section_id, faculty_id }) => {
+  await pool.execute('DELETE FROM channel_members WHERE channel_id = ?', [channel_id]);
+
+  await pool.execute(
+    `INSERT INTO channel_members (channel_id, user_id)
+     SELECT ?, u.id
+     FROM users u
+     WHERE u.section_id = ? AND u.role = 'student' AND u.is_active = 1`,
+    [channel_id, section_id]
+  );
+
+  if (faculty_id) {
+    await pool.execute(
+      `INSERT INTO channel_members (channel_id, user_id)
+       SELECT ?, u.id
+       FROM users u
+       WHERE u.id = ? AND u.role = 'faculty'`,
+      [channel_id, faculty_id]
+    );
+  }
+};
+
+const ensureSubjectChannelForOffering = async (offeringId, dept_id) => {
+  const offering = await getSubjectOfferingContext(offeringId, dept_id);
+  const channelName = buildSubjectChannelName(offering);
+
+  const [existingRows] = await pool.execute(
+    `SELECT *
+     FROM channels
+     WHERE subject_offering_id = ?
+        OR (type = 'subject' AND dept_id = ? AND section_id = ? AND subject_offering_id IS NULL AND name = ?)
+     ORDER BY id ASC
+     LIMIT 1`,
+    [offeringId, dept_id, offering.section_id, channelName]
+  );
+
+  let channel = existingRows[0];
+  let created = false;
+
+  if (!channel) {
+    const [insertResult] = await pool.execute(
+      'INSERT INTO channels (name, type, dept_id, section_id, subject_offering_id, term_id) VALUES (?, "subject", ?, ?, ?, ?)',
+      [channelName, dept_id, offering.section_id, offering.id, offering.term_id || null]
+    );
+
+    const [createdRows] = await pool.execute('SELECT * FROM channels WHERE id = ?', [insertResult.insertId]);
+    channel = createdRows[0];
+    created = true;
+  } else {
+    await pool.execute(
+      'UPDATE channels SET name = ?, dept_id = ?, section_id = ?, subject_offering_id = ?, term_id = ? WHERE id = ?',
+      [channelName, dept_id, offering.section_id, offering.id, offering.term_id || null, channel.id]
+    );
+    channel = {
+      ...channel,
+      name: channelName,
+      dept_id,
+      section_id: offering.section_id,
+      subject_offering_id: offering.id,
+      term_id: offering.term_id || null
+    };
+  }
+
+  await syncSubjectChannelMembers({
+    channel_id: channel.id,
+    section_id: offering.section_id,
+    faculty_id: offering.faculty_id
+  });
+
+  return {
+    created,
+    channel,
+    offering
+  };
+};
+
 const createSubjectOffering = async ({ subject_id, section_id, faculty_id, term_id, dept_id }) => {
   const [result] = await pool.execute('INSERT INTO subject_offerings (subject_id, section_id, faculty_id, term_id) VALUES (?, ?, ?, ?)', [subject_id, section_id, faculty_id, term_id]);
-  return { id: result.insertId };
+  const ensured = await ensureSubjectChannelForOffering(result.insertId, dept_id);
+  return {
+    id: result.insertId,
+    channel_created: ensured.created,
+    channel: ensured.channel
+  };
 };
 
 const deleteSubjectOffering = async (dept_id, offeringId) => {
@@ -487,8 +595,127 @@ const deleteSubjectOffering = async (dept_id, offeringId) => {
 };
 
 const updateSubjectOffering = async (dept_id, offeringId, data) => {
-  await pool.execute('UPDATE subject_offerings SET faculty_id = ?, term_id = ? WHERE id = ?', [data.faculty_id, data.term_id, offeringId]);
-  return { id: offeringId, ...data };
+  await getSubjectOfferingContext(offeringId, dept_id);
+  await pool.execute(
+    'UPDATE subject_offerings SET faculty_id = ?, section_id = ?, term_id = ? WHERE id = ?',
+    [data.faculty_id, data.section_id, data.term_id, offeringId]
+  );
+  const ensured = await ensureSubjectChannelForOffering(offeringId, dept_id);
+  return {
+    id: offeringId,
+    ...data,
+    channel_created: ensured.created,
+    channel: ensured.channel
+  };
+};
+
+const getSubjectAnalytics = async (dept_id, subjectId) => {
+  const [subjectRows] = await pool.execute(
+    `SELECT s.*, d.name AS dept_name
+     FROM subjects s
+     LEFT JOIN departments d ON d.id = s.dept_id
+     WHERE s.id = ? AND s.dept_id = ?`,
+    [subjectId, dept_id]
+  );
+
+  if (!subjectRows[0]) {
+    throw new Error('Subject not found');
+  }
+
+  const [offeringRows] = await pool.execute(
+    `SELECT
+      so.id,
+      so.subject_id,
+      so.section_id,
+      so.faculty_id,
+      so.term_id,
+      sec.name AS section_name,
+      u.name AS faculty_name,
+      t.name AS term_name,
+      c.id AS channel_id,
+      c.name AS channel_name,
+      (SELECT COUNT(*) FROM channel_members cm WHERE cm.channel_id = c.id) AS member_count
+     FROM subject_offerings so
+     JOIN sections sec ON sec.id = so.section_id
+     LEFT JOIN users u ON u.id = so.faculty_id
+     LEFT JOIN terms t ON t.id = so.term_id
+     LEFT JOIN channels c ON c.subject_offering_id = so.id AND c.type = 'subject'
+     WHERE so.subject_id = ?
+     ORDER BY sec.name ASC, t.name ASC`,
+    [subjectId]
+  );
+
+  const facultyMap = new Map();
+  const sectionMap = new Map();
+
+  offeringRows.forEach((offering) => {
+    if (offering.faculty_id) {
+      facultyMap.set(offering.faculty_id, {
+        id: offering.faculty_id,
+        name: offering.faculty_name || 'Unassigned'
+      });
+    }
+    if (offering.section_id) {
+      sectionMap.set(offering.section_id, {
+        id: offering.section_id,
+        name: offering.section_name
+      });
+    }
+  });
+
+  return {
+    subject: subjectRows[0],
+    summary: {
+      totalOfferings: offeringRows.length,
+      assignedFacultyCount: facultyMap.size,
+      assignedSectionCount: sectionMap.size,
+      channelCount: offeringRows.filter((offering) => offering.channel_id).length,
+      missingChannelCount: offeringRows.filter((offering) => !offering.channel_id).length
+    },
+    assignedFaculty: Array.from(facultyMap.values()),
+    assignedSections: Array.from(sectionMap.values()),
+    offerings: offeringRows
+  };
+};
+
+const createSubjectChannels = async (dept_id, subjectId) => {
+  const [subjectRows] = await pool.execute(
+    'SELECT id FROM subjects WHERE id = ? AND dept_id = ?',
+    [subjectId, dept_id]
+  );
+
+  if (!subjectRows[0]) {
+    throw new Error('Subject not found');
+  }
+
+  const [offeringRows] = await pool.execute(
+    `SELECT so.id
+     FROM subject_offerings so
+     JOIN subjects s ON s.id = so.subject_id
+     WHERE so.subject_id = ? AND s.dept_id = ?`,
+    [subjectId, dept_id]
+  );
+
+  if (offeringRows.length === 0) {
+    return {
+      success: true,
+      createdCount: 0,
+      updatedCount: 0,
+      channels: []
+    };
+  }
+
+  const results = [];
+  for (const offering of offeringRows) {
+    results.push(await ensureSubjectChannelForOffering(offering.id, dept_id));
+  }
+
+  return {
+    success: true,
+    createdCount: results.filter((result) => result.created).length,
+    updatedCount: results.filter((result) => !result.created).length,
+    channels: results.map((result) => result.channel)
+  };
 };
 
 const createAnnouncement = async ({ 
@@ -817,6 +1044,8 @@ module.exports = {
   createSubject, 
   updateSubject, 
   deleteSubject, 
+  getSubjectAnalytics,
+  createSubjectChannels,
   getSubjectOfferings, 
   createSubjectOffering, 
   deleteSubjectOffering, 

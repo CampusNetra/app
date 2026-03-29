@@ -303,6 +303,28 @@ const deleteSubject = async (req, res) => {
   }
 };
 
+const getSubjectAnalytics = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const analytics = await adminService.getSubjectAnalytics(dept_id, id);
+    res.json(analytics);
+  } catch (error) {
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const createSubjectChannels = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const result = await adminService.createSubjectChannels(dept_id, id);
+    res.json(result);
+  } catch (error) {
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
 const getSubjectOfferings = async (req, res) => {
   try {
     const { dept_id } = req.user;
@@ -576,6 +598,8 @@ module.exports = {
   createSubject,
   updateSubject,
   deleteSubject,
+  getSubjectAnalytics,
+  createSubjectChannels,
   getSubjectOfferings,
   createSubjectOffering,
   updateSubjectOffering,

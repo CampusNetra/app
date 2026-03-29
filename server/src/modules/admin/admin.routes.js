@@ -24,6 +24,8 @@ router.get('/subjects', authMiddleware, adminController.getSubjects);
 router.post('/subjects', authMiddleware, adminController.createSubject);
 router.put('/subjects/:id', authMiddleware, adminController.updateSubject);
 router.delete('/subjects/:id', authMiddleware, adminController.deleteSubject);
+router.get('/subjects/:id/analytics', authMiddleware, adminController.getSubjectAnalytics);
+router.post('/subjects/:id/create-channels', authMiddleware, adminController.createSubjectChannels);
 router.get('/offerings', authMiddleware, adminController.getSubjectOfferings);
 router.post('/offerings/assign-faculty', authMiddleware, adminController.createSubjectOffering);
 router.put('/offerings/:id', authMiddleware, adminController.updateSubjectOffering);
