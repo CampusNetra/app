@@ -43,6 +43,16 @@ const getChannels = async (req, res) => {
   }
 };
 
+const createChannel = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const result = await adminService.createChannel({ dept_id, ...req.body });
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getClubs = async (req, res) => {
   try {
     const { dept_id } = req.user;
@@ -293,6 +303,28 @@ const deleteSubject = async (req, res) => {
   }
 };
 
+const getSubjectAnalytics = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const analytics = await adminService.getSubjectAnalytics(dept_id, id);
+    res.json(analytics);
+  } catch (error) {
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const createSubjectChannels = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const result = await adminService.createSubjectChannels(dept_id, id);
+    res.json(result);
+  } catch (error) {
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
 const getSubjectOfferings = async (req, res) => {
   try {
     const { dept_id } = req.user;
@@ -518,11 +550,33 @@ const sendReply = async (req, res) => {
   }
 };
 
+const getChannelEligibleUsers = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const users = await adminService.getChannelMemberEligibleUsers(dept_id);
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const syncChannelMembers = async (req, res) => {
+  try {
+    const { id: channel_id } = req.params;
+    const { userIds } = req.body;
+    const result = await adminService.syncChannelMembers({ channel_id, user_ids: userIds });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getStats,
   getAnnouncements,
   getActivity,
   getChannels,
+  createChannel,
   getClubs,
   createClub,
   updateClub,
@@ -544,6 +598,8 @@ module.exports = {
   createSubject,
   updateSubject,
   deleteSubject,
+  getSubjectAnalytics,
+  createSubjectChannels,
   getSubjectOfferings,
   createSubjectOffering,
   updateSubjectOffering,
@@ -556,5 +612,7 @@ module.exports = {
   getChannelMessages,
   getMessageReplies,
   sendMessage,
-  sendReply
+  sendReply,
+  getChannelEligibleUsers,
+  syncChannelMembers
 };

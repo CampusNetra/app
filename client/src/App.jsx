@@ -6,6 +6,8 @@ import AdminLayout from './modules/admin/components/AdminLayout';
 import Dashboard from './modules/admin/Dashboard';
 import TermsPage from './modules/admin/TermsPage';
 import Welcome from './modules/admin/Welcome';
+import StudentWelcome from './modules/student/StudentWelcome';
+import StudentSignup from './modules/student/StudentSignup';
 import Platform from './modules/legal/Platform';
 import Resources from './modules/legal/Resources';
 import Support from './modules/legal/Support';
@@ -25,7 +27,6 @@ import SystemAnalytics from './modules/admin/SystemAnalytics';
 import ChatSystem from './modules/admin/chat/ChatSystem';
 import LandingPage from './modules/common/LandingPage';
 import StudentSplash from './modules/student/StudentSplash';
-import StudentLogin from './modules/student/StudentLogin';
 import StudentOTP from './modules/student/StudentOTP';
 import StudentFeed from './modules/student/StudentFeed';
 import StudentAlertsPage from './modules/student/StudentAlertsPage';
@@ -55,7 +56,8 @@ function App() {
         <Route path="/admin/signup" element={<Signup />} />
         <Route path="/faculty/login" element={<FacultyLogin />} />
         <Route path="/student/splash" element={<StudentSplash />} />
-        <Route path="/student/login" element={<StudentLogin />} />
+        <Route path="/student/welcome" element={<StudentWelcome />} />
+        <Route path="/student/signup" element={<StudentSignup />} />
         <Route path="/student/verify" element={<StudentOTP />} />
         <Route path="/student/feed" element={<StudentFeed />} />
         <Route path="/student/alerts" element={<StudentAlertsPage />} />
@@ -66,7 +68,7 @@ function App() {
         <Route path="/student/events/:eventId" element={<StudentEventDetailsPage />} />
         <Route path="/student/chat" element={<StudentChatPage />} />
         <Route path="/student/profile" element={<StudentProfilePage />} />
-        <Route path="/student" element={<Navigate to="/student/login" replace />} />
+        <Route path="/student" element={<Navigate to="/student/welcome" replace />} />
         
         <Route element={<ProtectedRoute />}>
           <Route path="/admin/welcome" element={<Welcome />} />

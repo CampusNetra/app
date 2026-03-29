@@ -10,7 +10,7 @@ const LandingPage = () => {
   const handleRoleSelect = (role) => {
     setOpenLoginModal(false);
     if (role === 'admin') navigate('/admin/login');
-    if (role === 'student') navigate('/student/splash');
+    if (role === 'student') navigate('/student/welcome');
     if (role === 'faculty') navigate('/faculty/login');
   };
 
