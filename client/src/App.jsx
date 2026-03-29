@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './modules/admin/Login';
 import Signup from './modules/admin/Signup';
 import AdminLayout from './modules/admin/components/AdminLayout';
@@ -23,28 +23,39 @@ import DataImport from './modules/admin/DataImport';
 import ModerationDashboard from './modules/admin/ModerationDashboard';
 import SystemAnalytics from './modules/admin/SystemAnalytics';
 
+const ProtectedRoute = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  return <Outlet />;
+};
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/admin/login" element={<Login />} />
         <Route path="/admin/signup" element={<Signup />} />
-        <Route path="/admin/welcome" element={<Welcome />} />
-        <Route path="/admin/dashboard" element={<Dashboard />} />
         
-        <Route element={<AdminLayout />}>
-          <Route path="/admin/students" element={<StudentsManagement />} />
-          <Route path="/admin/faculty" element={<FacultyManagement />} />
-          <Route path="/admin/branches" element={<BranchesManagement />} />
-          <Route path="/admin/sections" element={<SectionsManagement />} />
-          <Route path="/admin/subjects" element={<SubjectsManagement />} />
-          <Route path="/admin/faculty-assignments" element={<FacultyAssignment />} />
-          <Route path="/admin/channels" element={<ChannelsManagement />} />
-          <Route path="/admin/clubs" element={<ClubsManagement />} />
-          <Route path="/admin/data-import" element={<DataImport />} />
-          <Route path="/admin/moderation" element={<ModerationDashboard />} />
-          <Route path="/admin/analytics" element={<SystemAnalytics />} />
-          <Route path="/admin/terms" element={<TermsPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/admin/welcome" element={<Welcome />} />
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/students" element={<StudentsManagement />} />
+            <Route path="/admin/faculty" element={<FacultyManagement />} />
+            <Route path="/admin/branches" element={<BranchesManagement />} />
+            <Route path="/admin/sections" element={<SectionsManagement />} />
+            <Route path="/admin/subjects" element={<SubjectsManagement />} />
+            <Route path="/admin/faculty-assignments" element={<FacultyAssignment />} />
+            <Route path="/admin/channels" element={<ChannelsManagement />} />
+            <Route path="/admin/clubs" element={<ClubsManagement />} />
+            <Route path="/admin/data-import" element={<DataImport />} />
+            <Route path="/admin/moderation" element={<ModerationDashboard />} />
+            <Route path="/admin/analytics" element={<SystemAnalytics />} />
+            <Route path="/admin/terms" element={<TermsPage />} />
+          </Route>
         </Route>
         
         <Route path="/platform" element={<Platform />} />
@@ -53,7 +64,9 @@ function App() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         
-        <Route path="/" element={<Navigate to="/admin/login" />} />
+        <Route path="/dashboard" element={<Navigate to="/admin/dashboard" />} />
+        
+        <Route path="*" element={<Navigate to="/admin/login" />} />
       </Routes>
     </Router>
   );
