@@ -20,14 +20,14 @@ const LegalPageLayout = ({ title, subtitle, children }) => (
       </nav>
     </header>
 
-    <main className="cn-auth-main" style={{ justifyContent: 'flex-start', paddingTop: '4rem' }}>
-      <div className="cn-auth-shell" style={{ maxWidth: '920px' }}>
-        <div className="cn-auth-header" style={{ textAlign: 'left', marginBottom: '2rem' }}>
+    <main className="cn-auth-main cn-auth-main-legal">
+      <div className="cn-auth-shell cn-auth-shell-legal">
+        <div className="cn-auth-header cn-auth-header-legal">
           <h1 className="cn-auth-heading">{title}</h1>
           {subtitle ? <p className="cn-auth-subtext">{subtitle}</p> : null}
         </div>
 
-        <div className="cn-auth-card" style={{ padding: '2rem' }}>
+        <div className="cn-auth-card cn-auth-card-legal">
           {children}
         </div>
       </div>

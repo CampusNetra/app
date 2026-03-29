@@ -44,4 +44,12 @@ router.get('/reports', authMiddleware, adminController.getReports);
 router.post('/reports/:id/resolve', authMiddleware, adminController.resolveReport);
 router.delete('/channels/:id', authMiddleware, adminController.deleteChannel);
 
+// Chat System
+router.get('/chat/channels', authMiddleware, adminController.getChatChannels);
+router.get('/chat/channels/:id/details', authMiddleware, adminController.getChatChannelDetails);
+router.get('/chat/channels/:id/messages', authMiddleware, adminController.getChannelMessages);
+router.get('/chat/messages/:id/replies', authMiddleware, adminController.getMessageReplies);
+router.post('/chat/messages/:id/replies', authMiddleware, adminController.sendReply);
+router.post('/chat/channels/:id/messages', authMiddleware, adminController.sendMessage);
+
 module.exports = router;
