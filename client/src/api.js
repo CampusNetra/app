@@ -7,10 +7,24 @@ const api = axios.create({
 // Add a request interceptor to include the token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // If Authorization header is already set, keep it (e.g., student token passed explicitly)
+    if (config.headers.Authorization) {
+      return config;
     }
+    
+    // Check for student token first (in sessionStorage)
+    const studentToken = sessionStorage.getItem('student_token');
+    if (studentToken) {
+      config.headers.Authorization = `Bearer ${studentToken}`;
+      return config;
+    }
+    
+    // Fall back to admin token (in localStorage)
+    const adminToken = localStorage.getItem('token');
+    if (adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`;
+    }
+    
     return config;
   },
   (error) => {

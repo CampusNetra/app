@@ -59,9 +59,9 @@ const DashboardHeader = ({
             <button
               type="button"
               onClick={onCreateAnnouncement}
-              className="h-11 px-4 rounded-xl bg-[#e53935] hover:bg-[#d32f2f] text-white text-sm font-bold flex items-center gap-2"
+              className="h-11 px-5 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-extrabold flex items-center gap-2.5 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
             >
-              <Plus size={18} />
+              <Plus size={18} strokeWidth={3} />
               <span>Create Announcement</span>
             </button>
           ) : null}
