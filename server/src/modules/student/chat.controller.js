@@ -46,13 +46,40 @@ const getMessageReplies = async (req, res) => {
 const sendMessage = async (req, res) => {
   try {
     const { id: channel_id } = req.params;
-    const { id: sender_id } = req.user;
+    const { id: sender_id, role } = req.user;
     const { content, type = 'text', parent_id = null } = req.body;
+
+    const trimmedContent = `${content || ''}`.trim();
+    if (!trimmedContent) {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+
+    const channelPolicy = await chatService.getChannelPostingPolicy(channel_id);
+    if (!channelPolicy) {
+      return res.status(404).json({ error: 'Channel not found' });
+    }
+
+    if (parent_id) {
+      const parentMessage = await chatService.getMessageById(parent_id);
+      if (!parentMessage || Number(parentMessage.channel_id) !== Number(channel_id) || parentMessage.parent_id) {
+        return res.status(400).json({ error: 'Invalid thread parent' });
+      }
+    }
+
+    if (
+      role === 'student' &&
+      !parent_id &&
+      channelPolicy.student_posting_mode === 'thread_only'
+    ) {
+      return res.status(403).json({
+        error: 'Students can only reply in threads in this group'
+      });
+    }
 
     const message = await chatService.sendMessage({
       channel_id,
       sender_id,
-      content,
+      content: trimmedContent,
       type,
       parent_id
     });

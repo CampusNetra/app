@@ -1,5 +1,20 @@
 const pool = require('../config/db');
 
+const annotateStudentChannel = (channel) => {
+  const isDepartmentBroadcast =
+    channel?.type === 'branch' &&
+    channel?.section_id == null &&
+    channel?.subject_offering_id == null;
+
+  return {
+    ...channel,
+    is_department_broadcast: isDepartmentBroadcast,
+    can_student_post_top_level: !isDepartmentBroadcast,
+    can_student_reply_in_threads: true,
+    student_posting_mode: isDepartmentBroadcast ? 'thread_only' : 'open'
+  };
+};
+
 const getStudentChannels = async (user_id, dept_id, section_id) => {
   try {
     // 1. Fetch Branch Channels (Dept ALL)
@@ -14,14 +29,14 @@ const getStudentChannels = async (user_id, dept_id, section_id) => {
         (SELECT m.created_at FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message_time,
         (SELECT u.name FROM messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_sender
       FROM channels c
-      WHERE (c.dept_id = ? AND c.type = 'branch' AND c.section_id IS NULL)
+      WHERE (c.dept_id = ? AND c.section_id IS NULL)
          OR (c.section_id = ? AND c.type = 'section')
          OR (c.section_id = ? AND c.type = 'subject')
       ORDER BY FIELD(c.type, 'branch', 'section', 'subject'), c.created_at DESC`,
       [dept_id, section_id, section_id]
     );
 
-    return rows || [];
+    return (rows || []).map(annotateStudentChannel);
   } catch (err) {
     console.error('getStudentChannels error:', err.message);
     return [];
@@ -93,6 +108,30 @@ const sendMessage = async ({ channel_id, sender_id, content, type = 'text', pare
   }
 };
 
+const getChannelPostingPolicy = async (channel_id) => {
+  const [rows] = await pool.execute(
+    `SELECT id, name, type, section_id, subject_offering_id
+     FROM channels
+     WHERE id = ?`,
+    [channel_id]
+  );
+
+  if (rows.length === 0) return null;
+
+  return annotateStudentChannel(rows[0]);
+};
+
+const getMessageById = async (message_id) => {
+  const [rows] = await pool.execute(
+    `SELECT id, channel_id, parent_id, type
+     FROM messages
+     WHERE id = ?`,
+    [message_id]
+  );
+
+  return rows[0] || null;
+};
+
 const getChannelDetails = async (channel_id) => {
   try {
     const [rows] = await pool.execute(
@@ -120,10 +159,10 @@ const getChannelDetails = async (channel_id) => {
       [channel_id]
     );
 
-    return {
+    return annotateStudentChannel({
       ...channel,
       members: members || []
-    };
+    });
   } catch (err) {
     console.error('getChannelDetails error:', err.message);
     throw err;
@@ -135,5 +174,7 @@ module.exports = {
   getChannelMessages,
   getMessageReplies,
   sendMessage,
-  getChannelDetails
+  getChannelDetails,
+  getChannelPostingPolicy,
+  getMessageById
 };
