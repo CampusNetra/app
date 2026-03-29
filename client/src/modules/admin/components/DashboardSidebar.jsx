@@ -40,6 +40,7 @@ const DashboardSidebar = ({ collapsed, setCollapsed, user }) => {
     { label: 'Faculty Assignments', icon: ClipboardCheck, path: '/admin/faculty-assignments' },
     { label: 'Academic Terms', icon: Database, path: '/admin/terms' },
     { label: 'COMMUNICATION', type: 'label' },
+    { label: 'Group Chats', icon: MessageSquare, path: '/admin/chat' },
     { label: 'Channels', icon: MessageSquare, path: '/admin/channels' },
     { label: 'Clubs', icon: Bell, path: '/admin/clubs' },
     { label: 'Moderation', icon: ShieldAlert, path: '/admin/moderation' },

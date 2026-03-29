@@ -30,16 +30,12 @@ const SystemAnalytics = () => {
   const fetchAnalytics = async () => {
     setLoading(true);
     setError(null);
-    console.log('Fetching analytics for range:', timeRange);
     
     try {
       const [statsRes, announcementsRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/announcements')
       ]);
-      
-      console.log('Stats Response:', statsRes.data);
-      console.log('Announcements Response:', announcementsRes.data);
       
       setStats(statsRes.data);
       setAnnouncements(announcementsRes.data || []);

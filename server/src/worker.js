@@ -1,6 +1,8 @@
 const authService = require('./services/auth.service');
 const adminService = require('./services/admin.service');
 const termsService = require('./services/terms.service');
+const studentService = require('./services/student.service');
+const announcementService = require('./services/announcement.service');
 const jwt = require('jsonwebtoken');
 
 const jsonResponse = (data, status = 200) => {
@@ -63,6 +65,70 @@ export default {
             } catch (e) {
                 return jsonResponse({ error: e.message }, 400);
             }
+        }
+
+        if (path === '/api/auth/student-login' && request.method === 'POST') {
+            const body = await request.json();
+            try {
+                const result = await authService.studentLogin(body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        if (path === '/api/student/feed' && request.method === 'GET') {
+            const student = await authMiddleware(request, env);
+            if (!student || student.role !== 'student') {
+                return jsonResponse({ error: 'Unauthorized' }, 401);
+            }
+
+            try {
+                const data = await studentService.getFeed({
+                    user_id: student.id,
+                    dept_id: student.dept_id,
+                    section_id: student.section_id,
+                    limit: url.searchParams.get('limit') || 50
+                });
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        // --- ANNOUNCEMENTS ROUTES ---
+        if (path.startsWith('/api/announcements')) {
+            if (!user) {
+                return jsonResponse({ error: 'Unauthorized' }, 401);
+            }
+
+            if (path === '/api/announcements' && request.method === 'GET') {
+                try {
+                    const limit = url.searchParams.get('limit') || 50;
+                    const announcements = await announcementService.getAnnouncements({
+                        limit: Math.min(Math.max(Number(limit) || 50, 1), 100),
+                        is_active: 1
+                    });
+                    return jsonResponse(announcements);
+                } catch (e) {
+                    return jsonResponse({ error: e.message }, 500);
+                }
+            }
+
+            if (path === '/api/announcements' && request.method === 'POST') {
+                try {
+                    const body = await request.json();
+                    const announcement = await announcementService.createAnnouncement({
+                        ...body,
+                        created_by: user.id
+                    });
+                    return jsonResponse(announcement, 201);
+                } catch (e) {
+                    return jsonResponse({ error: e.message }, 400);
+                }
+            }
+
+            return jsonResponse({ error: 'Not Found' }, 404);
         }
 
         // --- ADMIN ROUTES (Protected) ---

@@ -7,16 +7,17 @@ import {
   MessageSquare,
   TrendingUp,
 } from "lucide-react";
-import CreateAnnouncementModal from "./components/CreateAnnouncementModal";
 import DashboardSidebar from "./components/DashboardSidebar";
 import DashboardHeader from "./components/DashboardHeader";
+import AnnouncementModal from "./components/AnnouncementModal";
 
 const Dashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
   const [user, setUser] = useState({
     name: "Admin User",
     email: "admin@campusnetra.com",
+    dept_name: "Your Department"
   });
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -33,9 +34,10 @@ const Dashboard = () => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
       } catch {
-        setUser({ name: "Admin User", email: "admin@campusnetra.com" });
+        setUser({ name: "Admin User", email: "admin@campusnetra.com", dept_name: "Your Department" });
       }
     }
     fetchAllData();
@@ -141,7 +143,7 @@ const Dashboard = () => {
       >
         <DashboardHeader
           showCreateButton
-          onCreateAnnouncement={() => setIsModalOpen(true)}
+          onCreateAnnouncement={() => setIsAnnouncementModalOpen(true)}
         />
 
         <main style={{ flex: 1, overflowY: "auto", padding: "36px 42px" }}>
@@ -224,6 +226,7 @@ const Dashboard = () => {
               </div>
             ))}
           </div>
+
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <div
               className="xl:col-span-2"
@@ -277,7 +280,7 @@ const Dashboard = () => {
                           fontSize: "11px",
                         }}
                       >
-                        Subject
+                        Announcement
                       </th>
                       <th
                         style={{
@@ -323,7 +326,9 @@ const Dashboard = () => {
                               borderTop: "1px solid #f8fafc",
                             }}
                           >
-                            {ann.title}
+                            <div style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {ann.title}
+                            </div>
                           </td>
                           <td
                             style={{
@@ -332,13 +337,23 @@ const Dashboard = () => {
                               borderTop: "1px solid #f8fafc",
                             }}
                           >
-                            {ann.channel_name}
+                            <span style={{ 
+                              padding: "4px 10px", 
+                              background: "#f1f5f9", 
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              color: "#475569"
+                            }}>
+                              {ann.channel_name}
+                            </span>
                           </td>
                           <td
                             style={{
                               padding: "13px 18px",
                               color: "#64748b",
                               borderTop: "1px solid #f8fafc",
+                              fontSize: "13px"
                             }}
                           >
                             {new Date(ann.created_at).toLocaleDateString(
@@ -358,7 +373,10 @@ const Dashboard = () => {
                               borderTop: "1px solid #f8fafc",
                             }}
                           >
-                            {(ann.reach || 0).toLocaleString()}
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <TrendingUp size={14} className="text-green-500" />
+                              {(ann.reach || 0).toLocaleString()}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -479,10 +497,10 @@ const Dashboard = () => {
           </div>
         </main>
 
-        <CreateAnnouncementModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onCreated={fetchAllData}
+        <AnnouncementModal
+          isOpen={isAnnouncementModalOpen}
+          onClose={() => setIsAnnouncementModalOpen(false)}
+          onAnnouncementPosted={fetchAllData}
         />
       </div>
     </div>

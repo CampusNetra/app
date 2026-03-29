@@ -4,8 +4,8 @@ const csv = require('csv-parser');
 
 const getStats = async (req, res) => {
   try {
-    const { dept_id } = req.user; // From auth middleware
-    const stats = await adminService.getDashboardStats(dept_id);
+    const deptId = req.user?.dept_id ?? null;
+    const stats = await adminService.getDashboardStats(deptId);
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -14,8 +14,8 @@ const getStats = async (req, res) => {
 
 const getAnnouncements = async (req, res) => {
   try {
-    const { dept_id } = req.user;
-    const announcements = await adminService.getRecentAnnouncements(dept_id);
+    const deptId = req.user?.dept_id ?? null;
+    const announcements = await adminService.getRecentAnnouncements(deptId);
     res.json(announcements);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -24,8 +24,8 @@ const getAnnouncements = async (req, res) => {
 
 const getActivity = async (req, res) => {
   try {
-    const { dept_id } = req.user;
-    const activity = await adminService.getUserActivity(dept_id);
+    const deptId = req.user?.dept_id ?? null;
+    const activity = await adminService.getUserActivity(deptId);
     res.json(activity);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -346,17 +346,15 @@ const deleteSubjectOffering = async (req, res) => {
 const createAnnouncement = async (req, res) => {
   try {
     const { id: sender_id, dept_id } = req.user;
-    const { channel_id, content } = req.body;
     
-    if (!channel_id || !content) {
-      return res.status(400).json({ error: 'Missing channel_id or content' });
+    if (!req.body.content) {
+      return res.status(400).json({ error: 'Missing content' });
     }
 
     const announcement = await adminService.createAnnouncement({
       sender_id,
       dept_id,
-      channel_id,
-      content
+      ...req.body
     });
     
     res.status(201).json(announcement);
@@ -427,6 +425,99 @@ const importFaculty = async (req, res) => {
     });
 };
 
+const getChatChannels = async (req, res) => {
+  try {
+    const { id: user_id, dept_id } = req.user;
+    const channels = await adminService.getChatChannels(user_id, dept_id);
+    res.json(channels);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getChannelMessages = async (req, res) => {
+  try {
+    const { id: channel_id } = req.params;
+    const { limit = 50 } = req.query;
+    const messages = await adminService.getChannelMessages(channel_id, limit);
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getChatChannelDetails = async (req, res) => {
+  try {
+    const { id: channel_id } = req.params;
+    const { dept_id } = req.user;
+    const details = await adminService.getChatChannelDetails(channel_id, dept_id);
+    res.json(details);
+  } catch (error) {
+    res.status(error.message.includes('not found') ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const getMessageReplies = async (req, res) => {
+  try {
+    const { id: message_id } = req.params;
+    const { limit = 100 } = req.query;
+    const replies = await adminService.getMessageReplies(message_id, limit);
+    res.json(replies);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const sendMessage = async (req, res) => {
+  try {
+    const { id: channel_id } = req.params;
+    const { id: sender_id } = req.user;
+    const { content, type, parent_id } = req.body;
+    
+    const message = await adminService.sendMessage({
+      channel_id,
+      sender_id,
+      content,
+      type,
+      parent_id
+    });
+
+    const io = req.app.get('io');
+    if (io && message) {
+      io.to(`chat:channel:${Number(channel_id)}`).emit('chat:new-message', message);
+    }
+    
+    res.status(201).json(message);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const sendReply = async (req, res) => {
+  try {
+    const { id: parent_id } = req.params;
+    const { id: sender_id } = req.user;
+    const { content } = req.body;
+
+    const message = await adminService.sendMessage({
+      channel_id: null,
+      sender_id,
+      content,
+      type: 'text',
+      parent_id
+    });
+
+    const io = req.app.get('io');
+    if (io && message) {
+      io.to(`chat:channel:${Number(message.channel_id)}`).emit('chat:new-message', message);
+    }
+
+    res.status(201).json(message);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getStats,
   getAnnouncements,
@@ -459,5 +550,11 @@ module.exports = {
   deleteSubjectOffering,
   createAnnouncement,
   importStudents,
-  importFaculty
+  importFaculty,
+  getChatChannels,
+  getChatChannelDetails,
+  getChannelMessages,
+  getMessageReplies,
+  sendMessage,
+  sendReply
 };

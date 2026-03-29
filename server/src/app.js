@@ -3,6 +3,9 @@ const cors = require('cors');
 const authRoutes = require('./modules/auth/auth.routes');
 const termsRoutes = require('./modules/terms/terms.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
+const studentRoutes = require('./modules/student/student.routes');
+
+const announcementRoutes = require('./modules/admin/announcement.routes');
 
 const app = express();
 
@@ -13,6 +16,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/terms', termsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/student', studentRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

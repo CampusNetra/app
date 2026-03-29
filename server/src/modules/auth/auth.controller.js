@@ -1,4 +1,4 @@
-const authService = require('../../services/auth.service');
+const authService = require('../admin/auth.service');
 
 const signup = async (req, res) => {
   try {
@@ -18,7 +18,17 @@ const login = async (req, res) => {
   }
 };
 
+const studentLogin = async (req, res) => {
+  try {
+    const result = await authService.studentLogin(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
-  login
+  login,
+  studentLogin
 };
