@@ -182,13 +182,21 @@ const getChannels = async (dept_id = null, type = null) => {
   }
 };
 
-const createChannel = async ({ dept_id, name, type = 'announcement', description = '', visibility = 'department' }) => {
+const createChannel = async ({ dept_id, creator_id, name, type = 'announcement', description = '', visibility = 'department' }) => {
   try {
     const [result] = await pool.execute(
-      'INSERT INTO channels (name, description, type, visibility, dept_id) VALUES (?, ?, ?, ?, ?)',
-      [name.trim(), description.trim(), type, visibility, dept_id]
+      'INSERT INTO channels (name, description, type, visibility, dept_id, creator_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name.trim(), description.trim(), type, visibility, dept_id, creator_id]
     );
-    return { id: result.insertId, name: name.trim(), type, description, visibility };
+    const channelId = result.insertId;
+    
+    // Auto-add creator as owner
+    await pool.execute(
+      'INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)',
+      [channelId, creator_id, 'owner']
+    );
+
+    return { id: channelId, name: name.trim(), type, description, visibility };
   } catch (err) {
     console.error('createChannel error:', err.message);
     throw err;
@@ -211,13 +219,19 @@ const getClubs = async (dept_id) => {
   }
 };
 
-const createClub = async ({ dept_id, name, description, category }) => {
+const createClub = async ({ dept_id, creator_id, name, description, category }) => {
   try {
     const [chanResult] = await pool.execute(
-      'INSERT INTO channels (name, type, dept_id) VALUES (?, "club", ?)',
-      [`Club: ${name}`, dept_id]
+      'INSERT INTO channels (name, type, dept_id, creator_id) VALUES (?, "club", ?, ?)',
+      [`Club: ${name}`, dept_id, creator_id]
     );
     const channelId = chanResult.insertId;
+
+    // Auto-add creator as owner
+    await pool.execute(
+      'INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)',
+      [channelId, creator_id, 'owner']
+    );
 
     const [result] = await pool.execute(
       'INSERT INTO clubs (name, description, category, dept_id, channel_id) VALUES (?, ?, ?, ?, ?)',
@@ -429,9 +443,12 @@ const getDepartments = async (deptId = null) => {
   return rows;
 };
 
-const createDepartment = async (name) => {
+const createDepartment = async (name, creator_id) => {
   const [result] = await pool.execute('INSERT INTO departments (name) VALUES (?)', [name.trim()]);
-  await pool.execute('INSERT INTO channels (name, type, dept_id) VALUES (?, "branch", ?)', [`${name.trim()} - All`, result.insertId]);
+  const [chanRes] = await pool.execute('INSERT INTO channels (name, type, dept_id, creator_id) VALUES (?, "branch", ?, ?)', [`${name.trim()} - All`, result.insertId, creator_id]);
+  
+  await pool.execute('INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)', [chanRes.insertId, creator_id, 'owner']);
+  
   return { id: result.insertId, name: name.trim() };
 };
 
@@ -440,11 +457,14 @@ const getSections = async (dept_id) => {
   return rows;
 };
 
-const createSection = async ({ dept_id, name }) => {
+const createSection = async ({ dept_id, creator_id, name }) => {
   const [result] = await pool.execute('INSERT INTO sections (name, dept_id) VALUES (?, ?)', [name.trim(), dept_id]);
   const sectionId = result.insertId;
   const [deptRows] = await pool.execute('SELECT name FROM departments WHERE id = ?', [dept_id]);
-  await pool.execute('INSERT INTO channels (name, type, dept_id, section_id) VALUES (?, "section", ?, ?)', [`${deptRows[0]?.name || 'Dept'} - ${name.trim()}`, dept_id, sectionId]);
+  const [chanRes] = await pool.execute('INSERT INTO channels (name, type, dept_id, section_id, creator_id) VALUES (?, "section", ?, ?, ?)', [`${deptRows[0]?.name || 'Dept'} - ${name.trim()}`, dept_id, sectionId, creator_id]);
+  
+  await pool.execute('INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)', [chanRes.insertId, creator_id, 'owner']);
+  
   return { id: sectionId, name: name.trim(), dept_id };
 };
 
@@ -835,7 +855,7 @@ const getChatChannels = async (user_id, dept_id) => {
         (SELECT m.created_at FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message_time,
         (SELECT u.name FROM messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_sender
       FROM channels c
-      WHERE (c.dept_id = ? OR ? IS NULL) AND (c.type IN ('branch', 'announcement', 'general', 'club'))
+      WHERE (c.dept_id = ? OR ? IS NULL) AND c.type NOT IN ('section', 'subject')
       ORDER BY FIELD(c.type, 'branch', 'announcement', 'general', 'club'), c.created_at DESC`,
       [dept_id, dept_id]
     );
@@ -1002,10 +1022,29 @@ const syncChannelMembers = async ({ channel_id, user_ids }) => {
     // "select who will be added in the chat group" -> usually means sync.
     await connection.execute('DELETE FROM channel_members WHERE channel_id = ?', [channel_id]);
     
-    // 2. Insert new members
+    // 2. Insert new members with appropriate roles
     if (user_ids && user_ids.length > 0) {
-      const values = user_ids.map(uid => [channel_id, uid]);
-      await connection.query('INSERT IGNORE INTO channel_members (channel_id, user_id) VALUES ?', [values]);
+      // Get the channel's creator_id for comparison
+      const [chanRows] = await connection.execute('SELECT creator_id FROM channels WHERE id = ?', [channel_id]);
+      const creatorId = chanRows[0]?.creator_id;
+
+      for (const uid of user_ids) {
+        // Fetch user's system role to determine channel role
+        const [uRows] = await connection.execute('SELECT role FROM users WHERE id = ?', [uid]);
+        const userSystemRole = uRows[0]?.role;
+        
+        let channelRole = 'member';
+        if (Number(uid) === Number(creatorId)) {
+          channelRole = 'owner';
+        } else if (userSystemRole === 'faculty' || userSystemRole.includes('admin')) {
+          channelRole = 'admin';
+        }
+
+        await connection.execute(
+          'INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)',
+          [channel_id, uid, channelRole]
+        );
+      }
     }
     
     await connection.commit();

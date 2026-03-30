@@ -31,7 +31,23 @@ const attachSocketAuth = (io) => {
   });
 };
 
-const registerChatHandlers = (socket) => {
+const presenceService = require('../services/presence.service');
+
+const registerChatHandlers = (socket, io) => {
+  const userId = socket.user?.id;
+  if (userId) {
+    presenceService.updatePresence(userId, true);
+    // Broadcast presence update if needed
+    io.emit('user:presence', { userId, is_online: 1 });
+  }
+
+  socket.on('disconnect', () => {
+    if (userId) {
+      presenceService.updatePresence(userId, false);
+      io.emit('user:presence', { userId, is_online: 0, last_seen: new Date() });
+    }
+  });
+
   socket.on('chat:join-channel', (payload = {}) => {
     const channelId = Number(payload.channelId);
     if (!channelId) return;
