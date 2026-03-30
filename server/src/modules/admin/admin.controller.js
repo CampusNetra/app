@@ -45,8 +45,8 @@ const getChannels = async (req, res) => {
 
 const createChannel = async (req, res) => {
   try {
-    const { dept_id } = req.user;
-    const result = await adminService.createChannel({ dept_id, ...req.body });
+    const { id: creator_id, dept_id } = req.user;
+    const result = await adminService.createChannel({ dept_id, creator_id, ...req.body });
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -65,8 +65,8 @@ const getClubs = async (req, res) => {
 
 const createClub = async (req, res) => {
   try {
-    const { dept_id } = req.user;
-    const club = await adminService.createClub({ dept_id, ...req.body });
+    const { id: creator_id, dept_id } = req.user;
+    const club = await adminService.createClub({ dept_id, creator_id, ...req.body });
     res.status(201).json(club);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -224,12 +224,12 @@ const getDepartments = async (req, res) => {
 
 const createDepartment = async (req, res) => {
   try {
-    const { role } = req.user;
+    const { role, id: creator_id } = req.user;
     if (role !== 'super_admin') {
       return res.status(403).json({ error: 'Only super admins can create departments' });
     }
     const { name } = req.body;
-    const department = await adminService.createDepartment(name);
+    const department = await adminService.createDepartment(name, creator_id);
     res.status(201).json(department);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -248,9 +248,9 @@ const getSections = async (req, res) => {
 
 const createSection = async (req, res) => {
   try {
-    const { dept_id } = req.user;
+    const { id: creator_id, dept_id } = req.user;
     const { name } = req.body;
-    const section = await adminService.createSection({ dept_id, name });
+    const section = await adminService.createSection({ dept_id, name, creator_id });
     res.status(201).json(section);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -563,8 +563,9 @@ const getChannelEligibleUsers = async (req, res) => {
 const syncChannelMembers = async (req, res) => {
   try {
     const { id: channel_id } = req.params;
+    const { id: admin_id } = req.user;
     const { userIds } = req.body;
-    const result = await adminService.syncChannelMembers({ channel_id, user_ids: userIds });
+    const result = await adminService.syncChannelMembers({ channel_id, user_ids: userIds, admin_id });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, Users, Shield, Megaphone } from 'lucide-react';
 import api from '../../../api';
 import StudentDock from '../StudentDock';
+import { io } from 'socket.io-client';
+
+const resolveSocketUrl = () => {
+  const configuredApi = import.meta.env.VITE_API_URL;
+  if (configuredApi && /^https?:\/\//.test(configuredApi)) {
+    return configuredApi.replace(/\/api\/?$/, '');
+  }
+  // Robust fallback for local development
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:5000';
+  }
+  return window.location.origin;
+};
 
 const ChatList = ({ onSelectChannel }) => {
   const [channels, setChannels] = useState([]);
@@ -21,6 +34,34 @@ const ChatList = ({ onSelectChannel }) => {
       }
     };
     fetchChannels();
+    
+    // Set up real-time updates for the list
+    const token = sessionStorage.getItem('student_token') || localStorage.getItem('token');
+    if (token) {
+      const socket = io(resolveSocketUrl(), {
+        auth: { token },
+        transports: ['websocket', 'polling']
+      });
+
+      socket.on('chat:new-message', (incomingMessage) => {
+        setChannels(prev => prev.map(c => {
+          if (Number(c.id) === Number(incomingMessage.channel_id)) {
+            return {
+              ...c,
+              last_message: incomingMessage.content,
+              last_message_time: incomingMessage.created_at,
+              last_sender: incomingMessage.sender_name,
+              unread_count: Number(c.unread_count || 0) + 1
+            };
+          }
+          return c;
+        }));
+      });
+
+      return () => {
+        socket.disconnect();
+      };
+    }
   }, []);
 
   const filteredChannels = channels.filter((channel) => {
@@ -29,7 +70,7 @@ const ChatList = ({ onSelectChannel }) => {
   });
 
   const categorized = {
-    announcements: filteredChannels.filter(c => c.is_department_broadcast || c.type === 'branch'),
+    announcements: filteredChannels.filter(c => c.section_id === null || c.type === 'branch'),
     sections: filteredChannels.filter(c => c.type === 'section'),
     subjects: filteredChannels.filter(c => c.type === 'subject')
   };
@@ -42,7 +83,7 @@ const ChatList = ({ onSelectChannel }) => {
   };
 
   const getChannelAccent = (channel) => {
-    if (channel.is_department_broadcast || channel.type === 'branch') return 'broadcast';
+    if (channel.section_id === null || channel.type === 'branch' || channel.type === 'general') return 'broadcast';
     if (channel.type === 'section') return 'section';
     if (channel.type === 'subject') return 'subject';
     return 'branch';

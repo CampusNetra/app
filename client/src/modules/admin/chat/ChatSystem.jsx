@@ -11,6 +11,10 @@ const resolveSocketUrl = () => {
   if (configuredApi && /^https?:\/\//.test(configuredApi)) {
     return configuredApi.replace(/\/api\/?$/, '');
   }
+  // Robust fallback for local development
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:5000';
+  }
   return window.location.origin;
 };
 
@@ -265,9 +269,22 @@ const ChatSystem = () => {
           }
           return [...prev, res.data];
         });
-      } else if (activeThreadMessage?.id) {
-        await fetchThreadReplies(activeThreadMessage.id);
-        await fetchMessages(activeChannel.id, true);
+      } else {
+        // For replies, update threadReplies and increment reply_count in main list
+        const newReply = res.data;
+        if (newReply && Number(activeThreadMessage?.id) === Number(newReply.parent_id)) {
+          setThreadReplies((prev) => {
+            if (prev.some((msg) => msg.id === newReply.id)) return prev;
+            return [...prev, newReply];
+          });
+        }
+        
+        setMessages((prev) => prev.map((msg) => {
+          if (Number(msg.id) === Number(options.parent_id)) {
+            return { ...msg, reply_count: Number(msg.reply_count || 0) + 1 };
+          }
+          return msg;
+        }));
       }
 
       setChannels((prev) => prev.map((c) =>

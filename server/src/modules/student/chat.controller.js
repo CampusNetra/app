@@ -86,14 +86,56 @@ const sendMessage = async (req, res) => {
 
     const io = req.app.get('io');
     if (io && message) {
-      if (parent_id) {
-         io.to(`chat:channel:${Number(channel_id)}`).emit('chat:new-reply', message);
-      } else {
-         io.to(`chat:channel:${Number(channel_id)}`).emit('chat:new-message', message);
-      }
+       io.to(`chat:channel:${Number(channel_id)}`).emit('chat:new-message', message);
     }
 
     res.status(201).json(message);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const editMessage = async (req, res) => {
+  try {
+    const { id: message_id } = req.params;
+    const { id: sender_id } = req.user;
+    const { content } = req.body;
+
+    const trimmed = `${content || ''}`.trim();
+    if (!trimmed) return res.status(400).json({ error: 'Content required' });
+
+    const success = await chatService.editMessage(message_id, sender_id, trimmed);
+    if (!success) return res.status(403).json({ error: 'Unauthorized or message not found' });
+
+    const message = await chatService.getMessageById(message_id);
+    const io = req.app.get('io');
+    if (io && message) {
+       io.to(`chat:channel:${Number(message.channel_id)}`).emit('chat:message-edited', message);
+    }
+
+    res.json(message);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteMessage = async (req, res) => {
+  try {
+    const { id: message_id } = req.params;
+    const { id: sender_id } = req.user;
+
+    const message = await chatService.getMessageById(message_id);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+
+    const success = await chatService.deleteMessage(message_id, sender_id);
+    if (!success) return res.status(403).json({ error: 'Unauthorized' });
+
+    const io = req.app.get('io');
+    if (io) {
+       io.to(`chat:channel:${Number(message.channel_id)}`).emit('chat:message-deleted', { id: message_id, channel_id: message.channel_id });
+    }
+
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -104,5 +146,7 @@ module.exports = {
   getChannelMessages,
   getChannelDetails,
   getMessageReplies,
-  sendMessage
+  sendMessage,
+  editMessage,
+  deleteMessage
 };
