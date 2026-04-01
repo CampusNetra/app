@@ -20,16 +20,34 @@ const getDashboardStats = async (dept_id) => {
     const [students] = await pool.execute('SELECT COUNT(*) as count FROM users WHERE role = "student" AND (dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
     const [faculty] = await pool.execute('SELECT COUNT(*) as count FROM users WHERE role = "faculty" AND (dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
     const [sections] = await pool.execute('SELECT COUNT(*) as count FROM sections WHERE (dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
-    const [channels] = await pool.execute('SELECT COUNT(*) as count FROM channels WHERE (dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
     const [suspended] = await pool.execute('SELECT COUNT(*) as count FROM users WHERE is_active = 0 AND (dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
-    const [memberships] = await pool.execute('SELECT COUNT(*) as count FROM channel_members cm JOIN channels c ON cm.channel_id = c.id WHERE (c.dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
+    
+    // Detailed Channel Counts
+    const [chanTotal] = await pool.execute('SELECT COUNT(*) as count FROM channels WHERE (dept_id = ? OR ? IS NULL)', [dept_id, dept_id]);
+    const [chanSection] = await pool.execute('SELECT COUNT(*) as count FROM channels WHERE (dept_id = ? OR ? IS NULL) AND type = "section"', [dept_id, dept_id]);
+    const [chanSubject] = await pool.execute('SELECT COUNT(*) as count FROM channels WHERE (dept_id = ? OR ? IS NULL) AND type = "subject"', [dept_id, dept_id]);
+    const [chanAnnounce] = await pool.execute('SELECT COUNT(*) as count FROM channels WHERE (dept_id = ? OR ? IS NULL) AND (type = "announcement" OR type = "branch" OR type = "general" OR type = "club")', [dept_id, dept_id]);
 
     stats.totalStudents = students[0]?.count || 0;
     stats.totalFaculty = faculty[0]?.count || 0;
-    stats.activeSections = sections[0]?.count || 0;
-    stats.totalChannels = channels[0]?.count || 0;
+    stats.activeSectionsCount = sections[0]?.count || 0;
     stats.suspendedUsers = suspended[0]?.count || 0;
-    stats.totalMemberships = memberships[0]?.count || 0;
+    
+    stats.channels = {
+      total: chanTotal[0]?.count || 0,
+      sections: chanSection[0]?.count || 0,
+      subjects: chanSubject[0]?.count || 0,
+      announcements: chanAnnounce[0]?.count || 0
+    };
+
+    const [mRows] = await pool.execute(`
+      SELECT COUNT(DISTINCT user_id) as count FROM (
+        SELECT user_id FROM channel_members cm JOIN channels c ON cm.channel_id = c.id WHERE (c.dept_id = ? OR ? IS NULL)
+        UNION
+        SELECT id as user_id FROM users WHERE section_id IS NOT NULL AND (dept_id = ? OR ? IS NULL)
+      ) as sub`, [dept_id, dept_id, dept_id, dept_id]);
+
+    stats.totalMemberships = mRows[0]?.count || 0;
 
     // 5. Messages Today (Dual Support)
     try {
@@ -129,7 +147,10 @@ const getChannels = async (dept_id = null, type = null) => {
     let sql = `
       SELECT 
         c.*, 
-        (SELECT COUNT(*) FROM channel_members cm WHERE cm.channel_id = c.id) as members
+        CASE 
+          WHEN c.type = 'section' THEN (SELECT COUNT(*) FROM users u WHERE u.section_id = c.section_id AND u.role = 'student')
+          ELSE (SELECT COUNT(*) FROM channel_members cm WHERE cm.channel_id = c.id)
+        END as members
       FROM channels c`;
     const params = [];
 
@@ -139,8 +160,12 @@ const getChannels = async (dept_id = null, type = null) => {
       params.push(dept_id, dept_id);
     }
     if (type) {
-      whereClauses.push('c.type = ?');
-      params.push(type);
+      if (type === 'announcement') {
+        whereClauses.push('(c.type = "announcement" OR c.type = "branch" OR c.type = "general")');
+      } else {
+        whereClauses.push('c.type = ?');
+        params.push(type);
+      }
     }
 
     if (whereClauses.length > 0) {
@@ -154,6 +179,27 @@ const getChannels = async (dept_id = null, type = null) => {
   } catch (err) {
     console.error('getChannels error:', err.message);
     return [];
+  }
+};
+
+const createChannel = async ({ dept_id, creator_id, name, type = 'announcement', description = '', visibility = 'department' }) => {
+  try {
+    const [result] = await pool.execute(
+      'INSERT INTO channels (name, description, type, visibility, dept_id, creator_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name.trim(), description.trim(), type, visibility, dept_id, creator_id]
+    );
+    const channelId = result.insertId;
+    
+    // Auto-add creator as owner
+    await pool.execute(
+      'INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)',
+      [channelId, creator_id, 'owner']
+    );
+
+    return { id: channelId, name: name.trim(), type, description, visibility };
+  } catch (err) {
+    console.error('createChannel error:', err.message);
+    throw err;
   }
 };
 
@@ -173,13 +219,19 @@ const getClubs = async (dept_id) => {
   }
 };
 
-const createClub = async ({ dept_id, name, description, category }) => {
+const createClub = async ({ dept_id, creator_id, name, description, category }) => {
   try {
     const [chanResult] = await pool.execute(
-      'INSERT INTO channels (name, type, dept_id) VALUES (?, "club", ?)',
-      [`Club: ${name}`, dept_id]
+      'INSERT INTO channels (name, type, dept_id, creator_id) VALUES (?, "club", ?, ?)',
+      [`Club: ${name}`, dept_id, creator_id]
     );
     const channelId = chanResult.insertId;
+
+    // Auto-add creator as owner
+    await pool.execute(
+      'INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)',
+      [channelId, creator_id, 'owner']
+    );
 
     const [result] = await pool.execute(
       'INSERT INTO clubs (name, description, category, dept_id, channel_id) VALUES (?, ?, ?, ?, ?)',
@@ -293,9 +345,20 @@ const getStudents = async ({ dept_id, search = '', section_id, verification_stat
     const whereSql = whereClauses.join(' AND ');
     const [students] = await pool.execute(`SELECT u.*, s.name AS section_name, d.name AS dept_name FROM users u LEFT JOIN sections s ON s.id = u.section_id LEFT JOIN departments d ON d.id = u.dept_id WHERE ${whereSql} ORDER BY u.created_at DESC LIMIT ? OFFSET ?`, [...params, safeLimit, offset]);
     const [countRows] = await pool.execute(`SELECT COUNT(*) AS total FROM users u WHERE ${whereSql}`, params);
+    const [sections] = await pool.execute('SELECT id, name FROM sections WHERE (dept_id = ? OR ? IS NULL) ORDER BY name ASC', [dept_id, dept_id]);
+
     const total = Number(countRows[0]?.total || 0);
 
-    return { students: students || [], pagination: { page: safePage, limit: safeLimit, total, totalPages: Math.ceil(total / safeLimit) || 1 } };
+    return { 
+      students: students || [], 
+      filters: { sections: sections || [] },
+      pagination: { 
+        page: safePage, 
+        limit: safeLimit, 
+        total, 
+        totalPages: Math.ceil(total / safeLimit) || 1 
+      } 
+    };
   } catch (err) {
     console.error('getStudents error:', err.message);
     return { students: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 1 } };
@@ -351,13 +414,17 @@ const createUserByRole = async ({ dept_id, role, data }) => {
   const sectionId = data?.section_id ? Number(data.section_id) : null;
 
   if (!name) throw new Error('Name is required');
+  if (!role) throw new Error('Role is required');
 
-  const actualPassword = String(password || regNo || enrollmentNo || '123456');
-  const hashedPassword = await bcrypt.hash(actualPassword, 10);
+  let hashedPassword = null;
+  if (role !== 'student') {
+    const actualPassword = String(password || regNo || enrollmentNo || '123456');
+    hashedPassword = await bcrypt.hash(actualPassword, 10);
+  }
 
   const [result] = await pool.execute(
     'INSERT INTO users (name, email, reg_no, enrollment_no, role, dept_id, section_id, password, verification_status, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [name, email, regNo, enrollmentNo, role, dept_id, role === 'student' ? sectionId : null, hashedPassword, verificationStatus, isActive]
+    [name, email, regNo, enrollmentNo, role, dept_id, role === 'student' ? sectionId : null, hashedPassword || '', verificationStatus, isActive]
   );
 
   const [rows] = await pool.execute('SELECT u.*, d.name AS dept_name, s.name AS section_name FROM users u LEFT JOIN departments d ON d.id = u.dept_id LEFT JOIN sections s ON s.id = u.section_id WHERE u.id = ?', [result.insertId]);
@@ -376,9 +443,12 @@ const getDepartments = async (deptId = null) => {
   return rows;
 };
 
-const createDepartment = async (name) => {
+const createDepartment = async (name, creator_id) => {
   const [result] = await pool.execute('INSERT INTO departments (name) VALUES (?)', [name.trim()]);
-  await pool.execute('INSERT INTO channels (name, type, dept_id) VALUES (?, "branch", ?)', [`${name.trim()} - All`, result.insertId]);
+  const [chanRes] = await pool.execute('INSERT INTO channels (name, type, dept_id, creator_id) VALUES (?, "branch", ?, ?)', [`${name.trim()} - All`, result.insertId, creator_id]);
+  
+  await pool.execute('INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)', [chanRes.insertId, creator_id, 'owner']);
+  
   return { id: result.insertId, name: name.trim() };
 };
 
@@ -387,11 +457,14 @@ const getSections = async (dept_id) => {
   return rows;
 };
 
-const createSection = async ({ dept_id, name }) => {
+const createSection = async ({ dept_id, creator_id, name }) => {
   const [result] = await pool.execute('INSERT INTO sections (name, dept_id) VALUES (?, ?)', [name.trim(), dept_id]);
   const sectionId = result.insertId;
   const [deptRows] = await pool.execute('SELECT name FROM departments WHERE id = ?', [dept_id]);
-  await pool.execute('INSERT INTO channels (name, type, dept_id, section_id) VALUES (?, "section", ?, ?)', [`${deptRows[0]?.name || 'Dept'} - ${name.trim()}`, dept_id, sectionId]);
+  const [chanRes] = await pool.execute('INSERT INTO channels (name, type, dept_id, section_id, creator_id) VALUES (?, "section", ?, ?, ?)', [`${deptRows[0]?.name || 'Dept'} - ${name.trim()}`, dept_id, sectionId, creator_id]);
+  
+  await pool.execute('INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)', [chanRes.insertId, creator_id, 'owner']);
+  
   return { id: sectionId, name: name.trim(), dept_id };
 };
 
@@ -423,9 +496,117 @@ const getSubjectOfferings = async (dept_id, section_id) => {
   return rows;
 };
 
+const getSubjectOfferingContext = async (offeringId, dept_id) => {
+  const [rows] = await pool.execute(
+    `SELECT
+      so.*,
+      s.name AS subject_name,
+      s.dept_id AS subject_dept_id,
+      sec.name AS section_name,
+      u.name AS faculty_name,
+      t.name AS term_name
+    FROM subject_offerings so
+    JOIN subjects s ON s.id = so.subject_id
+    JOIN sections sec ON sec.id = so.section_id
+    LEFT JOIN users u ON u.id = so.faculty_id
+    LEFT JOIN terms t ON t.id = so.term_id
+    WHERE so.id = ? AND s.dept_id = ?`,
+    [offeringId, dept_id]
+  );
+
+  if (!rows[0]) {
+    throw new Error('Offering not found');
+  }
+
+  return rows[0];
+};
+
+const buildSubjectChannelName = ({ subject_name, section_name }) => `${subject_name} (${section_name})`;
+
+const syncSubjectChannelMembers = async ({ channel_id, section_id, faculty_id }) => {
+  await pool.execute('DELETE FROM channel_members WHERE channel_id = ?', [channel_id]);
+
+  await pool.execute(
+    `INSERT INTO channel_members (channel_id, user_id)
+     SELECT ?, u.id
+     FROM users u
+     WHERE u.section_id = ? AND u.role = 'student' AND u.is_active = 1`,
+    [channel_id, section_id]
+  );
+
+  if (faculty_id) {
+    await pool.execute(
+      `INSERT INTO channel_members (channel_id, user_id)
+       SELECT ?, u.id
+       FROM users u
+       WHERE u.id = ? AND u.role = 'faculty'`,
+      [channel_id, faculty_id]
+    );
+  }
+};
+
+const ensureSubjectChannelForOffering = async (offeringId, dept_id) => {
+  const offering = await getSubjectOfferingContext(offeringId, dept_id);
+  const channelName = buildSubjectChannelName(offering);
+
+  const [existingRows] = await pool.execute(
+    `SELECT *
+     FROM channels
+     WHERE subject_offering_id = ?
+        OR (type = 'subject' AND dept_id = ? AND section_id = ? AND subject_offering_id IS NULL AND name = ?)
+     ORDER BY id ASC
+     LIMIT 1`,
+    [offeringId, dept_id, offering.section_id, channelName]
+  );
+
+  let channel = existingRows[0];
+  let created = false;
+
+  if (!channel) {
+    const [insertResult] = await pool.execute(
+      'INSERT INTO channels (name, type, dept_id, section_id, subject_offering_id, term_id) VALUES (?, "subject", ?, ?, ?, ?)',
+      [channelName, dept_id, offering.section_id, offering.id, offering.term_id || null]
+    );
+
+    const [createdRows] = await pool.execute('SELECT * FROM channels WHERE id = ?', [insertResult.insertId]);
+    channel = createdRows[0];
+    created = true;
+  } else {
+    await pool.execute(
+      'UPDATE channels SET name = ?, dept_id = ?, section_id = ?, subject_offering_id = ?, term_id = ? WHERE id = ?',
+      [channelName, dept_id, offering.section_id, offering.id, offering.term_id || null, channel.id]
+    );
+    channel = {
+      ...channel,
+      name: channelName,
+      dept_id,
+      section_id: offering.section_id,
+      subject_offering_id: offering.id,
+      term_id: offering.term_id || null
+    };
+  }
+
+  await syncSubjectChannelMembers({
+    channel_id: channel.id,
+    section_id: offering.section_id,
+    faculty_id: offering.faculty_id
+  });
+
+  return {
+    created,
+    channel,
+    offering
+  };
+};
+
 const createSubjectOffering = async ({ subject_id, section_id, faculty_id, term_id, dept_id }) => {
   const [result] = await pool.execute('INSERT INTO subject_offerings (subject_id, section_id, faculty_id, term_id) VALUES (?, ?, ?, ?)', [subject_id, section_id, faculty_id, term_id]);
-  return { id: result.insertId };
+  const ensured = await ensureSubjectChannelForOffering(result.insertId, dept_id);
+  return {
+    id: result.insertId,
+    channel_created: ensured.created,
+    channel: ensured.channel
+  };
 };
 
 const deleteSubjectOffering = async (dept_id, offeringId) => {
@@ -434,8 +615,127 @@ const deleteSubjectOffering = async (dept_id, offeringId) => {
 };
 
 const updateSubjectOffering = async (dept_id, offeringId, data) => {
-  await pool.execute('UPDATE subject_offerings SET faculty_id = ?, term_id = ? WHERE id = ?', [data.faculty_id, data.term_id, offeringId]);
-  return { id: offeringId, ...data };
+  await getSubjectOfferingContext(offeringId, dept_id);
+  await pool.execute(
+    'UPDATE subject_offerings SET faculty_id = ?, section_id = ?, term_id = ? WHERE id = ?',
+    [data.faculty_id, data.section_id, data.term_id, offeringId]
+  );
+  const ensured = await ensureSubjectChannelForOffering(offeringId, dept_id);
+  return {
+    id: offeringId,
+    ...data,
+    channel_created: ensured.created,
+    channel: ensured.channel
+  };
+};
+
+const getSubjectAnalytics = async (dept_id, subjectId) => {
+  const [subjectRows] = await pool.execute(
+    `SELECT s.*, d.name AS dept_name
+     FROM subjects s
+     LEFT JOIN departments d ON d.id = s.dept_id
+     WHERE s.id = ? AND s.dept_id = ?`,
+    [subjectId, dept_id]
+  );
+
+  if (!subjectRows[0]) {
+    throw new Error('Subject not found');
+  }
+
+  const [offeringRows] = await pool.execute(
+    `SELECT
+      so.id,
+      so.subject_id,
+      so.section_id,
+      so.faculty_id,
+      so.term_id,
+      sec.name AS section_name,
+      u.name AS faculty_name,
+      t.name AS term_name,
+      c.id AS channel_id,
+      c.name AS channel_name,
+      (SELECT COUNT(*) FROM channel_members cm WHERE cm.channel_id = c.id) AS member_count
+     FROM subject_offerings so
+     JOIN sections sec ON sec.id = so.section_id
+     LEFT JOIN users u ON u.id = so.faculty_id
+     LEFT JOIN terms t ON t.id = so.term_id
+     LEFT JOIN channels c ON c.subject_offering_id = so.id AND c.type = 'subject'
+     WHERE so.subject_id = ?
+     ORDER BY sec.name ASC, t.name ASC`,
+    [subjectId]
+  );
+
+  const facultyMap = new Map();
+  const sectionMap = new Map();
+
+  offeringRows.forEach((offering) => {
+    if (offering.faculty_id) {
+      facultyMap.set(offering.faculty_id, {
+        id: offering.faculty_id,
+        name: offering.faculty_name || 'Unassigned'
+      });
+    }
+    if (offering.section_id) {
+      sectionMap.set(offering.section_id, {
+        id: offering.section_id,
+        name: offering.section_name
+      });
+    }
+  });
+
+  return {
+    subject: subjectRows[0],
+    summary: {
+      totalOfferings: offeringRows.length,
+      assignedFacultyCount: facultyMap.size,
+      assignedSectionCount: sectionMap.size,
+      channelCount: offeringRows.filter((offering) => offering.channel_id).length,
+      missingChannelCount: offeringRows.filter((offering) => !offering.channel_id).length
+    },
+    assignedFaculty: Array.from(facultyMap.values()),
+    assignedSections: Array.from(sectionMap.values()),
+    offerings: offeringRows
+  };
+};
+
+const createSubjectChannels = async (dept_id, subjectId) => {
+  const [subjectRows] = await pool.execute(
+    'SELECT id FROM subjects WHERE id = ? AND dept_id = ?',
+    [subjectId, dept_id]
+  );
+
+  if (!subjectRows[0]) {
+    throw new Error('Subject not found');
+  }
+
+  const [offeringRows] = await pool.execute(
+    `SELECT so.id
+     FROM subject_offerings so
+     JOIN subjects s ON s.id = so.subject_id
+     WHERE so.subject_id = ? AND s.dept_id = ?`,
+    [subjectId, dept_id]
+  );
+
+  if (offeringRows.length === 0) {
+    return {
+      success: true,
+      createdCount: 0,
+      updatedCount: 0,
+      channels: []
+    };
+  }
+
+  const results = [];
+  for (const offering of offeringRows) {
+    results.push(await ensureSubjectChannelForOffering(offering.id, dept_id));
+  }
+
+  return {
+    success: true,
+    createdCount: results.filter((result) => result.created).length,
+    updatedCount: results.filter((result) => !result.created).length,
+    channels: results.map((result) => result.channel)
+  };
 };
 
 const createAnnouncement = async ({ 
@@ -475,7 +775,7 @@ const createAnnouncement = async ({
 const updateUser = async ({ dept_id, userId, data }) => {
   const fields = []; const params = [];
   Object.keys(data).forEach(key => {
-    if (['name', 'email', 'phone', 'is_active', 'verification_status'].includes(key)) {
+    if (['name', 'email', 'phone', 'is_active', 'verification_status', 'section_id', 'reg_no', 'enrollment_no'].includes(key)) {
       fields.push(`${key} = ?`); params.push(data[key]);
     }
   });
@@ -555,8 +855,9 @@ const getChatChannels = async (user_id, dept_id) => {
         (SELECT m.created_at FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message_time,
         (SELECT u.name FROM messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_sender
       FROM channels c
-      WHERE c.id = ?`,
-      [adminChannel.id]
+      WHERE (c.dept_id = ? OR ? IS NULL) AND c.type NOT IN ('section', 'subject')
+      ORDER BY FIELD(c.type, 'branch', 'announcement', 'general', 'club'), c.created_at DESC`,
+      [dept_id, dept_id]
     );
 
     return rows || [];
@@ -694,6 +995,111 @@ const sendMessage = async ({ channel_id, sender_id, content, type = 'text', pare
   return rows[0];
 };
 
+const getChannelMemberEligibleUsers = async (dept_id) => {
+  try {
+    const [sections] = await pool.execute('SELECT id, name FROM sections WHERE (dept_id = ? OR ? IS NULL) ORDER BY name ASC', [dept_id, dept_id]);
+    const [faculty] = await pool.execute('SELECT id, name FROM users WHERE role = "faculty" AND (dept_id = ? OR ? IS NULL) AND is_active = 1 ORDER BY name ASC', [dept_id, dept_id]);
+    const [students] = await pool.execute('SELECT id, name, section_id FROM users WHERE role = "student" AND (dept_id = ? OR ? IS NULL) AND is_active = 1 ORDER BY name ASC', [dept_id, dept_id]);
+    
+    return {
+      sections: sections || [],
+      faculty: faculty || [],
+      students: students || []
+    };
+  } catch (err) {
+    console.error('getChannelMemberEligibleUsers error:', err.message);
+    throw err;
+  }
+};
+
+const syncChannelMembers = async ({ channel_id, user_ids }) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    
+    // 1. Clear existing members (optional, but requested for 'sync' behavior usually)
+    // Actually, user said 'select who will be added', maybe just ADD them?
+    // "select who will be added in the chat group" -> usually means sync.
+    await connection.execute('DELETE FROM channel_members WHERE channel_id = ?', [channel_id]);
+    
+    // 2. Insert new members with appropriate roles
+    if (user_ids && user_ids.length > 0) {
+      // Get the channel's creator_id for comparison
+      const [chanRows] = await connection.execute('SELECT creator_id FROM channels WHERE id = ?', [channel_id]);
+      const creatorId = chanRows[0]?.creator_id;
+
+      for (const uid of user_ids) {
+        // Fetch user's system role to determine channel role
+        const [uRows] = await connection.execute('SELECT role FROM users WHERE id = ?', [uid]);
+        const userSystemRole = uRows[0]?.role;
+        
+        let channelRole = 'member';
+        if (Number(uid) === Number(creatorId)) {
+          channelRole = 'owner';
+        } else if (userSystemRole === 'faculty' || userSystemRole.includes('admin')) {
+          channelRole = 'admin';
+        }
+
+        await connection.execute(
+          'INSERT IGNORE INTO channel_members (channel_id, user_id, role) VALUES (?, ?, ?)',
+          [channel_id, uid, channelRole]
+        );
+      }
+    }
+    
+    await connection.commit();
+    return { success: true, count: user_ids.length };
+  } catch (err) {
+    await connection.rollback();
+    console.error('syncChannelMembers error:', err.message);
+    throw err;
+  } finally {
+    connection.release();
+  }
+};
+
 module.exports = {
-  getDashboardStats, getRecentAnnouncements, getUserActivity, getChannels, getClubs, createClub, updateClub, deleteClub, deleteChannel, getReports, resolveReport, getStudents, getFaculty, createStudent, createFaculty, getDepartments, createDepartment, getSections, createSection, getSubjects, createSubject, updateSubject, deleteSubject, getSubjectOfferings, createSubjectOffering, deleteSubjectOffering, updateSubjectOffering, createAnnouncement, updateUser, updateStudent: updateUser, updateFaculty: updateUser, importStudents, importFaculty, getChatChannels, getChannelMessages, getMessageReplies, getChatChannelDetails, sendMessage
+  getDashboardStats, 
+  getRecentAnnouncements, 
+  getUserActivity, 
+  getChannels, 
+  createChannel, 
+  getClubs, 
+  createClub, 
+  updateClub, 
+  deleteClub, 
+  deleteChannel, 
+  getReports, 
+  resolveReport, 
+  getStudents, 
+  getFaculty, 
+  createStudent, 
+  createFaculty, 
+  getDepartments, 
+  createDepartment, 
+  getSections, 
+  createSection, 
+  getSubjects, 
+  createSubject, 
+  updateSubject, 
+  deleteSubject, 
+  getSubjectAnalytics,
+  createSubjectChannels,
+  getSubjectOfferings, 
+  createSubjectOffering, 
+  deleteSubjectOffering, 
+  updateSubjectOffering, 
+  createAnnouncement, 
+  updateUser, 
+  updateStudent: updateUser, 
+  updateFaculty: updateUser, 
+  importStudents, 
+  importFaculty, 
+  getChatChannels, 
+  getChannelMessages, 
+  getMessageReplies, 
+  getChatChannelDetails, 
+  sendMessage,
+  getChannelMemberEligibleUsers,
+  syncChannelMembers
 };

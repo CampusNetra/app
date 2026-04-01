@@ -89,14 +89,19 @@ const FacultyAssignment = () => {
     setFeedback(null);
 
     try {
-      await api.post('/admin/offerings/assign-faculty', {
+      const response = await api.post('/admin/offerings/assign-faculty', {
         faculty_id: Number(formData.facultyId),
         subject_id: Number(formData.subjectId),
         section_id: Number(formData.sectionId),
         term_id: Number(formData.termId)
       });
       
-      setFeedback({ type: 'success', message: 'Assigned successfully!' });
+      setFeedback({
+        type: 'success',
+        message: response.data?.channel?.name
+          ? `Assigned successfully. Channel ready: ${response.data.channel.name}`
+          : 'Assigned successfully!'
+      });
       setFormData({ facultyId: '', sectionId: '', subjectId: '', termId: '' });
       setIsFormModalOpen(false);
       

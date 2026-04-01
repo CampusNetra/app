@@ -43,6 +43,16 @@ const getChannels = async (req, res) => {
   }
 };
 
+const createChannel = async (req, res) => {
+  try {
+    const { id: creator_id, dept_id } = req.user;
+    const result = await adminService.createChannel({ dept_id, creator_id, ...req.body });
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getClubs = async (req, res) => {
   try {
     const { dept_id } = req.user;
@@ -55,8 +65,8 @@ const getClubs = async (req, res) => {
 
 const createClub = async (req, res) => {
   try {
-    const { dept_id } = req.user;
-    const club = await adminService.createClub({ dept_id, ...req.body });
+    const { id: creator_id, dept_id } = req.user;
+    const club = await adminService.createClub({ dept_id, creator_id, ...req.body });
     res.status(201).json(club);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -214,12 +224,12 @@ const getDepartments = async (req, res) => {
 
 const createDepartment = async (req, res) => {
   try {
-    const { role } = req.user;
+    const { role, id: creator_id } = req.user;
     if (role !== 'super_admin') {
       return res.status(403).json({ error: 'Only super admins can create departments' });
     }
     const { name } = req.body;
-    const department = await adminService.createDepartment(name);
+    const department = await adminService.createDepartment(name, creator_id);
     res.status(201).json(department);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -238,9 +248,9 @@ const getSections = async (req, res) => {
 
 const createSection = async (req, res) => {
   try {
-    const { dept_id } = req.user;
+    const { id: creator_id, dept_id } = req.user;
     const { name } = req.body;
-    const section = await adminService.createSection({ dept_id, name });
+    const section = await adminService.createSection({ dept_id, name, creator_id });
     res.status(201).json(section);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -289,6 +299,28 @@ const deleteSubject = async (req, res) => {
     if (error.message.includes('active faculty assignments')) {
       return res.status(400).json({ error: error.message });
     }
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const getSubjectAnalytics = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const analytics = await adminService.getSubjectAnalytics(dept_id, id);
+    res.json(analytics);
+  } catch (error) {
+    res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
+  }
+};
+
+const createSubjectChannels = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const { id } = req.params;
+    const result = await adminService.createSubjectChannels(dept_id, id);
+    res.json(result);
+  } catch (error) {
     res.status(error.message === 'Subject not found' ? 404 : 500).json({ error: error.message });
   }
 };
@@ -518,11 +550,34 @@ const sendReply = async (req, res) => {
   }
 };
 
+const getChannelEligibleUsers = async (req, res) => {
+  try {
+    const { dept_id } = req.user;
+    const users = await adminService.getChannelMemberEligibleUsers(dept_id);
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const syncChannelMembers = async (req, res) => {
+  try {
+    const { id: channel_id } = req.params;
+    const { id: admin_id } = req.user;
+    const { userIds } = req.body;
+    const result = await adminService.syncChannelMembers({ channel_id, user_ids: userIds, admin_id });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getStats,
   getAnnouncements,
   getActivity,
   getChannels,
+  createChannel,
   getClubs,
   createClub,
   updateClub,
@@ -544,6 +599,8 @@ module.exports = {
   createSubject,
   updateSubject,
   deleteSubject,
+  getSubjectAnalytics,
+  createSubjectChannels,
   getSubjectOfferings,
   createSubjectOffering,
   updateSubjectOffering,
@@ -556,5 +613,7 @@ module.exports = {
   getChannelMessages,
   getMessageReplies,
   sendMessage,
-  sendReply
+  sendReply,
+  getChannelEligibleUsers,
+  syncChannelMembers
 };

@@ -67,7 +67,7 @@ const StudentFeed = () => {
     // Clear persistent login cache to prevent auto-login loop
     localStorage.removeItem('student_login');
     
-    navigate('/student/login', { replace: true });
+    navigate('/student/welcome', { replace: true });
   };
 
   useEffect(() => {
@@ -77,7 +77,7 @@ const StudentFeed = () => {
     const loadFeed = async () => {
       const token = sessionStorage.getItem('student_token');
       if (!token) {
-        navigate('/student/login', { replace: true });
+        navigate('/student/welcome', { replace: true });
         return;
       }
 

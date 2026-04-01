@@ -5,7 +5,7 @@ const getAnnouncements = async ({ dept_id, section_id, limit = 50 }) => {
 
   try {
     const [rows] = await pool.execute(
-      `SELECT
+       `SELECT
         id,
         title,
         content,
@@ -59,7 +59,57 @@ const getFeed = async ({ dept_id, section_id, limit = 50 }) => {
   }
 };
 
+const getProfile = async (user_id) => {
+  try {
+    // 1. Fetch Basic Profile Info
+    const [userRows] = await pool.execute(`
+      SELECT 
+        u.id, u.name, u.reg_no, u.role, u.avatar_url,
+        d.name as dept_name, 
+        s.name as section_name
+      FROM users u
+      LEFT JOIN departments d ON d.id = u.dept_id
+      LEFT JOIN sections s ON s.id = u.section_id
+      WHERE u.id = ?
+    `, [user_id]);
+    
+    if (!userRows[0]) throw new Error('User not found');
+
+    // 2. Fetch Clubs (Channels which are type club)
+    const [clubs] = await pool.execute(`
+      SELECT 
+        c.id, c.name, cl.category as category,
+        COALESCE(cm.role, 'Member') as role
+      FROM channels c
+      JOIN channel_members cm ON c.id = cm.channel_id
+      LEFT JOIN clubs cl ON cl.channel_id = c.id
+      WHERE cm.user_id = ? AND c.type = 'club'
+    `, [user_id]);
+
+    // 3. Fetch ALL Joined Groups (excluding clubs)
+    const [joinedGroups] = await pool.execute(`
+      SELECT 
+        c.id, c.name, c.type,
+        COALESCE(cm.role, 'Member') as role
+      FROM channels c
+      JOIN channel_members cm ON c.id = cm.channel_id
+      WHERE cm.user_id = ? AND c.type != 'club'
+      ORDER BY c.name ASC
+    `, [user_id]);
+    
+    return {
+      ...userRows[0],
+      clubs: clubs || [],
+      joinedGroups: joinedGroups || []
+    };
+  } catch (err) {
+    console.error('[StudentService] Error fetching profile:', err.message);
+    throw err;
+  }
+};
+
 module.exports = {
   getFeed,
-  getAnnouncements
+  getAnnouncements,
+  getProfile
 };

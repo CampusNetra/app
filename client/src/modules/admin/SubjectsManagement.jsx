@@ -3,6 +3,7 @@ import { RefreshCw, Plus, BookOpen, Search, ChevronRight, Trash2, Edit3, Loader2
 import api from '../../api';
 import SubjectModal from './components/SubjectModal';
 import DeleteConfirmationModal from './components/DeleteConfirmationModal';
+import SubjectAnalyticsModal from './components/SubjectAnalyticsModal';
 
 const SubjectsManagement = () => {
   const [subjects, setSubjects] = useState([]);
@@ -15,6 +16,11 @@ const SubjectsManagement = () => {
   const [subjectToEdit, setSubjectToEdit] = useState(null);
   const [subjectToDelete, setSubjectToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [analyticsSubject, setAnalyticsSubject] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState('');
+  const [creatingChannels, setCreatingChannels] = useState(false);
 
   useEffect(() => {
     fetchSubjects();
@@ -65,6 +71,46 @@ const SubjectsManagement = () => {
       setError(err.response?.data?.error || 'Failed to delete subject. Possibly in use.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const openAnalytics = async (subject) => {
+    setAnalyticsSubject(subject);
+    setAnalyticsData(null);
+    setAnalyticsError('');
+    setAnalyticsLoading(true);
+    try {
+      const res = await api.get(`/admin/subjects/${subject.id}/analytics`);
+      setAnalyticsData(res.data);
+    } catch (err) {
+      console.error('Error fetching subject analytics:', err);
+      setAnalyticsError(err.response?.data?.error || 'Failed to load subject analytics.');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const closeAnalytics = () => {
+    setAnalyticsSubject(null);
+    setAnalyticsData(null);
+    setAnalyticsError('');
+    setCreatingChannels(false);
+  };
+
+  const handleCreateChannels = async () => {
+    if (!analyticsSubject) return;
+    setCreatingChannels(true);
+    setAnalyticsError('');
+    try {
+      await api.post(`/admin/subjects/${analyticsSubject.id}/create-channels`);
+      const analyticsRes = await api.get(`/admin/subjects/${analyticsSubject.id}/analytics`);
+      setAnalyticsData(analyticsRes.data);
+      setError('');
+    } catch (err) {
+      console.error('Error creating subject channels:', err);
+      setAnalyticsError(err.response?.data?.error || 'Failed to create subject channels.');
+    } finally {
+      setCreatingChannels(false);
     }
   };
 
@@ -164,7 +210,10 @@ const SubjectsManagement = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-8 mt-8 border-t border-slate-50 relative z-10">
-                   <button className="flex items-center gap-2 text-[11px] font-black text-[#ff6129] uppercase tracking-widest hover:translate-x-1 transition-transform">
+                   <button
+                     onClick={() => openAnalytics(subject)}
+                     className="flex items-center gap-2 text-[11px] font-black text-[#ff6129] uppercase tracking-widest hover:translate-x-1 transition-transform"
+                   >
                       View Analytics
                       <ChevronRight size={14} />
                    </button>
@@ -209,6 +258,16 @@ const SubjectsManagement = () => {
         loading={isDeleting}
         title="Delete Subject"
         message={`This will permanently remove "${subjectToDelete?.name}". This action cannot be undone.`}
+      />
+
+      <SubjectAnalyticsModal
+        isOpen={!!analyticsSubject}
+        onClose={closeAnalytics}
+        loading={analyticsLoading}
+        creatingChannels={creatingChannels}
+        analytics={analyticsData}
+        error={analyticsError}
+        onCreateChannels={handleCreateChannels}
       />
     </div>
   );
