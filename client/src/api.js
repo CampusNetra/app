@@ -18,6 +18,13 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${studentToken}`;
       return config;
     }
+
+    // Check for faculty token
+    const facultyToken = sessionStorage.getItem('faculty_token');
+    if (facultyToken) {
+      config.headers.Authorization = `Bearer ${facultyToken}`;
+      return config;
+    }
     
     // Fall back to admin token (in localStorage)
     const adminToken = localStorage.getItem('token');

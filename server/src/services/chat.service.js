@@ -47,6 +47,39 @@ const getStudentChannels = async (user_id, dept_id, section_id) => {
   }
 };
 
+const getFacultyChannels = async (faculty_id, dept_id) => {
+  try {
+    const [rows] = await pool.execute(
+       `SELECT 
+        c.*,
+        (CASE 
+          WHEN c.visibility = 'all' THEN (SELECT COUNT(*) FROM users WHERE is_active = 1)
+          WHEN (c.visibility = 'department' AND c.section_id IS NULL AND c.subject_offering_id IS NULL) 
+            THEN (SELECT COUNT(*) FROM users WHERE dept_id = c.dept_id AND is_active = 1)
+          ELSE (SELECT COUNT(*) FROM channel_members WHERE channel_id = c.id)
+        END) AS member_count,
+        (SELECT m.content FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message,
+        (SELECT m.created_at FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message_time,
+        (SELECT u.name FROM messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_sender,
+        (SELECT COUNT(*) FROM messages m WHERE m.channel_id = c.id AND m.created_at > COALESCE((SELECT m2.created_at FROM messages m2 WHERE m2.id = (SELECT cm.last_read_message_id FROM channel_members cm WHERE cm.channel_id = c.id AND cm.user_id = ?)), '1970-01-01')) AS unread_count
+      FROM channels c
+      LEFT JOIN subject_offerings so ON so.id = c.subject_offering_id
+      LEFT JOIN channel_members cm_check ON cm_check.channel_id = c.id AND cm_check.user_id = ?
+      WHERE (c.dept_id = ? AND c.type IN ('branch', 'general')) -- Department Broadcasts
+         OR (so.faculty_id = ?) -- The assigned faculty for this specific subject/section
+         OR (cm_check.id IS NOT NULL) -- Explicit membership (Coordinator, etc.)
+      GROUP BY c.id
+      ORDER BY FIELD(c.type, 'branch', 'section', 'subject'), last_message_time DESC, c.created_at DESC`,
+      [faculty_id, dept_id, faculty_id, faculty_id]
+    );
+
+    return (rows || []).map(annotateStudentChannel);
+  } catch (err) {
+    console.error('getFacultyChannels error:', err.message);
+    return [];
+  }
+};
+
 const getChannelMessages = async (channel_id, limit = 50) => {
   try {
     const [rows] = await pool.execute(
@@ -109,6 +142,30 @@ const sendMessage = async ({ channel_id, sender_id, content, type = 'text', pare
   } catch (err) {
     console.error('sendMessage error:', err.message);
     throw err;
+  }
+};
+
+const markChannelAsRead = async (channel_id, user_id) => {
+  try {
+    // 1. Get the latest message ID in the channel
+    const [msgRows] = await pool.execute(
+      'SELECT MAX(id) as last_id FROM messages WHERE channel_id = ? AND parent_id IS NULL',
+      [channel_id]
+    );
+    const last_id = msgRows[0]?.last_id;
+    if (!last_id) return true;
+
+    // 2. Update or insert the read status
+    await pool.execute(
+      `INSERT INTO channel_members (channel_id, user_id, last_read_message_id) 
+       VALUES (?, ?, ?) 
+       ON DUPLICATE KEY UPDATE last_read_message_id = ?`,
+      [channel_id, user_id, last_id, last_id]
+    );
+    return true;
+  } catch (err) {
+    console.error('markChannelAsRead error:', err.message);
+    return false;
   }
 };
 
@@ -227,5 +284,7 @@ module.exports = {
   editMessage,
   deleteMessage,
   getChannelPostingPolicy,
-  getMessageById
+  getMessageById,
+  getFacultyChannels,
+  markChannelAsRead
 };

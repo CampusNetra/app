@@ -2,6 +2,8 @@ const authService = require('./services/auth.service');
 const adminService = require('./services/admin.service');
 const termsService = require('./services/terms.service');
 const studentService = require('./services/student.service');
+const facultyService = require('./services/faculty.service');
+const chatService = require('./services/chat.service');
 const announcementService = require('./services/announcement.service');
 const jwt = require('jsonwebtoken');
 
@@ -96,6 +98,67 @@ export default {
             }
         }
 
+        if (path === '/api/student/profile' && request.method === 'GET') {
+            const student = await authMiddleware(request, env);
+            if (!student || student.role !== 'student') {
+                return jsonResponse({ error: 'Unauthorized' }, 401);
+            }
+
+            try {
+                const data = await studentService.getProfile(student.id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        // Student Chat Routes
+        if (path.startsWith('/api/student/chat')) {
+            const student = await authMiddleware(request, env);
+            if (!student || student.role !== 'student') {
+                return jsonResponse({ error: 'Unauthorized' }, 401);
+            }
+
+            if (path === '/api/student/chat/channels' && request.method === 'GET') {
+                const data = await chatService.getStudentChannels(student.id, student.dept_id, student.section_id);
+                return jsonResponse(data);
+            }
+
+            const chanDetailsMatch = path.match(/^\/api\/student\/chat\/channels\/(\d+)$/);
+            if (chanDetailsMatch && request.method === 'GET') {
+                const data = await chatService.getChannelDetails(chanDetailsMatch[1]);
+                return jsonResponse(data);
+            }
+
+            const chanMessagesMatch = path.match(/^\/api\/student\/chat\/channels\/(\d+)\/messages$/);
+            if (chanMessagesMatch && request.method === 'GET') {
+                const data = await chatService.getChannelMessages(chanMessagesMatch[1], url.searchParams.get('limit'));
+                return jsonResponse(data);
+            }
+
+            if (chanMessagesMatch && request.method === 'POST') {
+                const body = await request.json();
+                const data = await chatService.sendMessage({
+                    channel_id: chanMessagesMatch[1],
+                    sender_id: student.id,
+                    ...body
+                });
+                return jsonResponse(data, 201);
+            }
+
+            const chanReadMatch = path.match(/^\/api\/student\/chat\/channels\/(\d+)\/read$/);
+            if (chanReadMatch && request.method === 'POST') {
+                await chatService.markChannelAsRead(chanReadMatch[1], student.id);
+                return jsonResponse({ success: true });
+            }
+
+            const msgRepliesMatch = path.match(/^\/api\/student\/chat\/messages\/(\d+)\/replies$/);
+            if (msgRepliesMatch && request.method === 'GET') {
+                const data = await chatService.getMessageReplies(msgRepliesMatch[1], url.searchParams.get('limit'));
+                return jsonResponse(data);
+            }
+        }
+
         // --- ANNOUNCEMENTS ROUTES ---
         if (path.startsWith('/api/announcements')) {
             if (!user) {
@@ -180,6 +243,16 @@ export default {
             try {
                 const data = await adminService.getChannels(user.dept_id, url.searchParams.get('type'));
                 return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (path === '/api/admin/channels' && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.createChannel({ dept_id: user.dept_id, ...body });
+                return jsonResponse(result, 201);
             } catch (e) {
                 return jsonResponse({ error: e.message }, 500);
             }
@@ -379,6 +452,26 @@ export default {
             }
         }
 
+        const subjectAnalyticsMatch = path.match(/^\/api\/admin\/subjects\/(\d+)\/analytics$/);
+        if (subjectAnalyticsMatch && request.method === 'GET') {
+            try {
+                const data = await adminService.getSubjectAnalytics(user.dept_id, subjectAnalyticsMatch[1]);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const createSubjectChannelsMatch = path.match(/^\/api\/admin\/subjects\/(\d+)\/create-channels$/);
+        if (createSubjectChannelsMatch && request.method === 'POST') {
+            try {
+                const result = await adminService.createSubjectChannels(user.dept_id, createSubjectChannelsMatch[1]);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
         if (path === '/api/admin/offerings' && request.method === 'GET') {
             try {
                 const data = await adminService.getSubjectOfferings(user.dept_id, url.searchParams.get('section_id'));
@@ -493,6 +586,98 @@ export default {
             }
         }
 
+        if (path === '/api/admin/channels/eligible-users' && request.method === 'GET') {
+            try {
+                const data = await adminService.getChannelEligibleUsers(user.dept_id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const syncMembersMatch = path.match(/^\/api\/admin\/channels\/(\d+)\/members$/);
+        if (syncMembersMatch && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.syncChannelMembers({ 
+                    channel_id: syncMembersMatch[1], 
+                    user_ids: body.userIds 
+                });
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        // --- CHAT SYSTEM ROUTES ---
+        if (path === '/api/admin/chat/channels' && request.method === 'GET') {
+            try {
+                const data = await adminService.getChatChannels(user.id, user.dept_id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const chatDetailsMatch = path.match(/^\/api\/admin\/chat\/channels\/(\d+)\/details$/);
+        if (chatDetailsMatch && request.method === 'GET') {
+            try {
+                const data = await adminService.getChatChannelDetails(chatDetailsMatch[1], user.dept_id);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const chatMessagesMatch = path.match(/^\/api\/admin\/chat\/channels\/(\d+)\/messages$/);
+        if (chatMessagesMatch && request.method === 'GET') {
+            try {
+                const data = await adminService.getChannelMessages(chatMessagesMatch[1]);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (chatMessagesMatch && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.sendMessage({
+                    channel_id: chatMessagesMatch[1],
+                    sender_id: user.id,
+                    ...body
+                });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        const msgRepliesMatch = path.match(/^\/api\/admin\/chat\/messages\/(\d+)\/replies$/);
+        if (msgRepliesMatch && request.method === 'GET') {
+            try {
+                const data = await adminService.getMessageReplies(msgRepliesMatch[1]);
+                return jsonResponse(data);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
+        if (msgRepliesMatch && request.method === 'POST') {
+            try {
+                const body = await request.json();
+                const result = await adminService.sendMessage({
+                    parent_id: msgRepliesMatch[1],
+                    sender_id: user.id,
+                    content: body.content,
+                    type: 'text'
+                });
+                return jsonResponse(result, 201);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 500);
+            }
+        }
+
         // --- TERMS ROUTES ---
         if (path === '/api/terms' && request.method === 'GET') {
             try {
@@ -520,6 +705,69 @@ export default {
                 return jsonResponse(result);
             } catch (e) {
                 return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        // --- FACULTY ROUTES ---
+        if (path.startsWith('/api/faculty')) {
+            const faculty = await authMiddleware(request, env);
+            if (!faculty || faculty.role !== 'faculty') {
+                return jsonResponse({ error: 'Unauthorized' }, 401);
+            }
+
+            if (path === '/api/faculty/dashboard' && request.method === 'GET') {
+                const data = await facultyService.getFacultyDashboard(faculty.id);
+                return jsonResponse(data);
+            }
+            if (path === '/api/faculty/subjects' && request.method === 'GET') {
+                const data = await facultyService.getFacultySubjects(faculty.id);
+                return jsonResponse(data);
+            }
+            if (path === '/api/faculty/targets' && request.method === 'GET') {
+                const data = await facultyService.getFacultyTargets(faculty.id);
+                return jsonResponse(data);
+            }
+
+            // Faculty Chat
+            if (path.startsWith('/api/faculty/chat')) {
+                if (path === '/api/faculty/chat/channels' && request.method === 'GET') {
+                    const data = await chatService.getFacultyChannels(faculty.id, faculty.dept_id);
+                    return jsonResponse(data);
+                }
+
+                const facChanDetailsMatch = path.match(/^\/api\/faculty\/chat\/channels\/(\d+)$/);
+                if (facChanDetailsMatch && request.method === 'GET') {
+                    const data = await chatService.getChannelDetails(facChanDetailsMatch[1]);
+                    return jsonResponse(data);
+                }
+
+                const facChanMessagesMatch = path.match(/^\/api\/faculty\/chat\/channels\/(\d+)\/messages$/);
+                if (facChanMessagesMatch && request.method === 'GET') {
+                    const data = await chatService.getChannelMessages(facChanMessagesMatch[1], url.searchParams.get('limit'));
+                    return jsonResponse(data);
+                }
+
+                if (facChanMessagesMatch && request.method === 'POST') {
+                    const body = await request.json();
+                    const data = await chatService.sendMessage({
+                        channel_id: facChanMessagesMatch[1],
+                        sender_id: faculty.id,
+                        ...body
+                    });
+                    return jsonResponse(data, 201);
+                }
+
+                const facChanReadMatch = path.match(/^\/api\/faculty\/chat\/channels\/(\d+)\/read$/);
+                if (facChanReadMatch && request.method === 'POST') {
+                    await chatService.markChannelAsRead(facChanReadMatch[1], faculty.id);
+                    return jsonResponse({ success: true });
+                }
+
+                const facMsgRepliesMatch = path.match(/^\/api\/faculty\/chat\/messages\/(\d+)\/replies$/);
+                if (facMsgRepliesMatch && request.method === 'GET') {
+                    const data = await chatService.getMessageReplies(facMsgRepliesMatch[1], url.searchParams.get('limit'));
+                    return jsonResponse(data);
+                }
             }
         }
 

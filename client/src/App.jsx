@@ -37,7 +37,20 @@ import StudentEventsPage from './modules/student/StudentEventsPage';
 import StudentChatPage from './modules/student/StudentChatPage';
 import StudentProfilePage from './modules/student/StudentProfilePage';
 import StudentEventDetailsPage from './modules/student/StudentEventDetailsPage';
-import FacultyLogin from './modules/faculty/FacultyLogin';
+import FacultyWelcome from './modules/faculty/FacultyWelcome';
+import FacultySignup from './modules/faculty/FacultySignup';
+import FacultyDashboard from './modules/faculty/FacultyDashboard';
+import FacultyNewAnnouncement from './modules/faculty/FacultyNewAnnouncement';
+import FacultyCreateAssignment from './modules/faculty/FacultyCreateAssignment';
+import FacultyAssignments from './modules/faculty/FacultyAssignments';
+import FacultyAnnouncements from './modules/faculty/FacultyAnnouncements';
+import FacultyPolls from './modules/faculty/FacultyPolls';
+import FacultyCreatePoll from './modules/faculty/FacultyCreatePoll';
+import FacultyMaterials from './modules/faculty/FacultyMaterials';
+import FacultyUploadMaterial from './modules/faculty/FacultyUploadMaterial';
+import FacultySubjects from './modules/faculty/FacultySubjects';
+import FacultyMessages from './modules/faculty/FacultyMessages';
+import FacultyChatWindow from './modules/faculty/FacultyChatWindow';
 
 const ProtectedRoute = () => {
   const token = localStorage.getItem('token');
@@ -54,7 +67,20 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/admin/login" element={<Login />} />
         <Route path="/admin/signup" element={<Signup />} />
-        <Route path="/faculty/login" element={<FacultyLogin />} />
+        <Route path="/faculty/login" element={<FacultyWelcome />} />
+        <Route path="/faculty/signup" element={<FacultySignup />} />
+        <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
+        <Route path="/faculty/announcements" element={<FacultyAnnouncements />} />
+        <Route path="/faculty/announcements/new" element={<FacultyNewAnnouncement />} />
+        <Route path="/faculty/assignments" element={<FacultyAssignments />} />
+        <Route path="/faculty/assignments/new" element={<FacultyCreateAssignment />} />
+        <Route path="/faculty/polls" element={<FacultyPolls />} />
+        <Route path="/faculty/polls/new" element={<FacultyCreatePoll />} />
+        <Route path="/faculty/materials" element={<FacultyMaterials />} />
+        <Route path="/faculty/materials/new" element={<FacultyUploadMaterial />} />
+        <Route path="/faculty/subjects" element={<FacultySubjects />} />
+        <Route path="/faculty/messages" element={<FacultyMessages />} />
+        <Route path="/faculty/messages/:channelId" element={<FacultyChatWindow />} />
         <Route path="/student/splash" element={<StudentSplash />} />
         <Route path="/student/welcome" element={<StudentWelcome />} />
         <Route path="/student/signup" element={<StudentSignup />} />

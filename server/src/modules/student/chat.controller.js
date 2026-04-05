@@ -2,8 +2,13 @@ const chatService = require('../../services/chat.service');
 
 const getChannels = async (req, res) => {
   try {
-    const { id: user_id, dept_id, section_id } = req.user;
-    const channels = await chatService.getStudentChannels(user_id, dept_id, section_id);
+    const { id: user_id, dept_id, section_id, role } = req.user;
+    let channels;
+    if (role === 'faculty') {
+      channels = await chatService.getFacultyChannels(user_id, dept_id);
+    } else {
+      channels = await chatService.getStudentChannels(user_id, dept_id, section_id);
+    }
     res.json(channels);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -141,6 +146,17 @@ const deleteMessage = async (req, res) => {
   }
 };
 
+const markAsRead = async (req, res) => {
+  try {
+    const { id: channel_id } = req.params;
+    const { id: user_id } = req.user;
+    await chatService.markChannelAsRead(channel_id, user_id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getChannels,
   getChannelMessages,
@@ -148,5 +164,6 @@ module.exports = {
   getMessageReplies,
   sendMessage,
   editMessage,
-  deleteMessage
+  deleteMessage,
+  markAsRead
 };
