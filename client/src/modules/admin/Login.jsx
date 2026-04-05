@@ -22,6 +22,12 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    if (localStorage.getItem("token")) {
+      navigate("/admin/dashboard");
+    }
+  }, [navigate]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };

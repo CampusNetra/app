@@ -44,7 +44,8 @@ const StudentProfilePage = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('student_token');
+    localStorage.removeItem('student_user');
     localStorage.removeItem('student_login');
     navigate('/student/splash');
   };
