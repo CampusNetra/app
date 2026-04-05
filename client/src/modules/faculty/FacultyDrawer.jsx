@@ -54,7 +54,8 @@ const FacultyDrawer = ({ isOpen, onClose, faculty }) => {
   ];
 
   const handleLogout = () => {
-    sessionStorage.removeItem("faculty_token");
+    localStorage.removeItem("faculty_token");
+    localStorage.removeItem("faculty_user");
     navigate("/faculty/login");
   };
 

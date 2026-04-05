@@ -12,6 +12,12 @@ const StudentWelcome = () => {
   const [error, setError] = useState('');
   const [showRegModal, setShowRegModal] = useState(false);
 
+  React.useEffect(() => {
+    if (localStorage.getItem('student_token')) {
+      navigate('/student/feed');
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -24,8 +30,8 @@ const StudentWelcome = () => {
       });
 
       const { token, user } = res.data;
-      sessionStorage.setItem('student_token', token);
-      sessionStorage.setItem('student_user', JSON.stringify(user));
+      localStorage.setItem('student_token', token);
+      localStorage.setItem('student_user', JSON.stringify(user));
       
       // Navigate to splash/loading then feed
       navigate('/student/splash');

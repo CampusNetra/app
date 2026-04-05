@@ -12,21 +12,21 @@ api.interceptors.request.use(
       return config;
     }
     
-    // Check for student token first (in sessionStorage)
-    const studentToken = sessionStorage.getItem('student_token');
+    // Check for student token first
+    const studentToken = localStorage.getItem('student_token');
     if (studentToken) {
       config.headers.Authorization = `Bearer ${studentToken}`;
       return config;
     }
 
     // Check for faculty token
-    const facultyToken = sessionStorage.getItem('faculty_token');
+    const facultyToken = localStorage.getItem('faculty_token');
     if (facultyToken) {
       config.headers.Authorization = `Bearer ${facultyToken}`;
       return config;
     }
     
-    // Fall back to admin token (in localStorage)
+    // Fall back to admin token
     const adminToken = localStorage.getItem('token');
     if (adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`;

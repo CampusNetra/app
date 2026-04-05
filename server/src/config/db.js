@@ -34,25 +34,55 @@ const executeOnD1 = async (sql, params = []) => {
     throw new Error('D1 binding not found');
   }
 
-  // Aggressively clean params to avoid D1_TYPE_ERROR with undefined
+  // 1. Aggressively clean params to avoid D1_TYPE_ERROR with undefined
   const cleanParams = (Array.isArray(params) ? params : [params]).map(v => 
     v === undefined ? null : v
   );
 
+  // 2. Translate MySQL-specific syntax to SQLite (D1)
+  // a. Convert "INSERT IGNORE" -> "INSERT OR IGNORE"
+  let translatedSql = sql.replace(/INSERT IGNORE/gi, 'INSERT OR IGNORE');
+
+  // b. Convert MySQL FIELD(column, 'v1', 'v2'...) -> SQLite CASE
+  // MySQL FIELD(c.type, 'branch', 'section') => (CASE c.type WHEN 'branch' THEN 1 WHEN 'section' THEN 2 ELSE 3 END)
+  translatedSql = translatedSql.replace(/FIELD\(([^,]+),\s*([^)]+)\)/gi, (match, column, argsStr) => {
+    const args = argsStr.split(',').map(a => a.trim());
+    let caseSql = `(CASE ${column.trim()} `;
+    args.forEach((val, idx) => {
+        caseSql += `WHEN ${val} THEN ${idx + 1} `;
+    });
+    caseSql += `ELSE ${args.length + 1} END)`;
+    return caseSql;
+  });
+
+  // c. Convert MySQL ON DUPLICATE KEY UPDATE (Specifically for known patterns in the app)
+  // Patterns like "INSERT INTO channel_members (...) ON DUPLICATE KEY UPDATE last_read_message_id = ?"
+  if (translatedSql.includes('ON DUPLICATE KEY UPDATE')) {
+      // 1. Detect table name to determine conflict target
+      if (translatedSql.includes('channel_members')) {
+          translatedSql = translatedSql.replace(/ON DUPLICATE KEY UPDATE (.*) = \?/gi, 
+            'ON CONFLICT(channel_id, user_id) DO UPDATE SET $1 = excluded.$1');
+      }
+      // Add other table patterns here if needed in the future
+  }
+
   try {
-    const prepared = d1.prepare(sql);
+    const prepared = d1.prepare(translatedSql);
     const statement = cleanParams.length ? prepared.bind(...cleanParams) : prepared;
     const result = await statement.all();
     const meta = result.meta || {};
-
-    return [
-      result.results || [],
-      {
+    const mutationResult = {
         ...meta,
         insertId: meta.last_row_id,
-        affectedRows: meta.changes
-      }
-    ];
+        affectedRows: meta.changes,
+        changedRows: meta.changes // MySQL result compatibility
+    };
+
+    const isQuery = /^\s*(SELECT|SHOW|DESCRIBE|PRAGMA)/i.test(translatedSql);
+
+    return isQuery 
+      ? [result.results || [], {}] 
+      : [mutationResult, []];
   } catch (err) {
     console.error('D1 Execution Error:', err.message);
     console.error('SQL:', sql);

@@ -12,6 +12,12 @@ const FacultyWelcome = () => {
   const [error, setError] = useState('');
   const [showRegModal, setShowRegModal] = useState(false);
 
+  React.useEffect(() => {
+    if (localStorage.getItem('faculty_token')) {
+      navigate('/faculty/dashboard');
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -24,8 +30,8 @@ const FacultyWelcome = () => {
       });
 
       const { token, user } = res.data;
-      sessionStorage.setItem('faculty_token', token);
-      sessionStorage.setItem('faculty_user', JSON.stringify(user));
+      localStorage.setItem('faculty_token', token);
+      localStorage.setItem('faculty_user', JSON.stringify(user));
       
       // Navigate to faculty dashboard (to be created)
       navigate('/faculty/dashboard');

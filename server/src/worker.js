@@ -251,7 +251,11 @@ export default {
         if (path === '/api/admin/channels' && request.method === 'POST') {
             try {
                 const body = await request.json();
-                const result = await adminService.createChannel({ dept_id: user.dept_id, ...body });
+                const result = await adminService.createChannel({ 
+                    dept_id: user.dept_id, 
+                    creator_id: user.id,
+                    ...body 
+                });
                 return jsonResponse(result, 201);
             } catch (e) {
                 return jsonResponse({ error: e.message }, 500);
@@ -529,7 +533,11 @@ export default {
         if (path === '/api/admin/clubs' && request.method === 'POST') {
             try {
                 const body = await request.json();
-                const result = await adminService.createClub({ dept_id: user.dept_id, ...body });
+                const result = await adminService.createClub({ 
+                    dept_id: user.dept_id, 
+                    creator_id: user.id,
+                    ...body 
+                });
                 return jsonResponse(result, 201);
             } catch (e) {
                 return jsonResponse({ error: e.message }, 500);
