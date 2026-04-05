@@ -34,19 +34,31 @@ const executeOnD1 = async (sql, params = []) => {
     throw new Error('D1 binding not found');
   }
 
-  const prepared = d1.prepare(sql);
-  const statement = params.length ? prepared.bind(...params) : prepared;
-  const result = await statement.all();
-  const meta = result.meta || {};
+  // Aggressively clean params to avoid D1_TYPE_ERROR with undefined
+  const cleanParams = (Array.isArray(params) ? params : [params]).map(v => 
+    v === undefined ? null : v
+  );
 
-  return [
-    result.results || [],
-    {
-      ...meta,
-      insertId: meta.last_row_id,
-      affectedRows: meta.changes
-    }
-  ];
+  try {
+    const prepared = d1.prepare(sql);
+    const statement = cleanParams.length ? prepared.bind(...cleanParams) : prepared;
+    const result = await statement.all();
+    const meta = result.meta || {};
+
+    return [
+      result.results || [],
+      {
+        ...meta,
+        insertId: meta.last_row_id,
+        affectedRows: meta.changes
+      }
+    ];
+  } catch (err) {
+    console.error('D1 Execution Error:', err.message);
+    console.error('SQL:', sql);
+    console.error('Params:', JSON.stringify(cleanParams));
+    throw err;
+  }
 };
 
 const execute = async (sql, params = []) => {
