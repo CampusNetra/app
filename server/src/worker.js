@@ -48,6 +48,8 @@ export default {
             return jsonResponse({});
         }
 
+        const user = await authMiddleware(request, env);
+
         // --- AUTH ROUTES ---
         if (path === '/api/auth/signup' && request.method === 'POST') {
             const body = await request.json();
@@ -73,6 +75,56 @@ export default {
             const body = await request.json();
             try {
                 const result = await authService.studentLogin(body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        if (path === '/api/auth/student-register-check' && request.method === 'POST') {
+            const body = await request.json();
+            try {
+                const result = await authService.studentRegisterCheck(body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        if (path === '/api/auth/student-set-password' && request.method === 'POST') {
+            const body = await request.json();
+            try {
+                const result = await authService.studentSetPassword(body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        if (path === '/api/auth/faculty-login' && request.method === 'POST') {
+            const body = await request.json();
+            try {
+                const result = await authService.facultyLogin(body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        if (path === '/api/auth/faculty-register-check' && request.method === 'POST') {
+            const body = await request.json();
+            try {
+                const result = await authService.facultyRegisterCheck(body);
+                return jsonResponse(result);
+            } catch (e) {
+                return jsonResponse({ error: e.message }, 400);
+            }
+        }
+
+        if (path === '/api/auth/faculty-set-password' && request.method === 'POST') {
+            const body = await request.json();
+            try {
+                const result = await authService.facultySetPassword(body);
                 return jsonResponse(result);
             } catch (e) {
                 return jsonResponse({ error: e.message }, 400);
@@ -195,11 +247,8 @@ export default {
         }
 
         // --- ADMIN ROUTES (Protected) ---
-        const user = await authMiddleware(request, env);
-        if (!user) {
-            if (path.startsWith('/api/admin')) {
-                return jsonResponse({ error: 'Unauthorized' }, 401);
-            }
+        if (!user && path.startsWith('/api/admin')) {
+            return jsonResponse({ error: 'Unauthorized' }, 401);
         }
 
         if (path === '/api/admin/stats' && request.method === 'GET') {
