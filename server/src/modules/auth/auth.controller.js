@@ -45,10 +45,40 @@ const studentSetPassword = async (req, res) => {
   }
 };
 
+const facultyLogin = async (req, res) => {
+  try {
+    const result = await authService.facultyLogin(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const facultyRegisterCheck = async (req, res) => {
+  try {
+    const result = await authService.facultyRegisterCheck(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const facultySetPassword = async (req, res) => {
+  try {
+    const result = await authService.facultySetPassword(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
   login,
   studentLogin,
   studentRegisterCheck,
-  studentSetPassword
+  studentSetPassword,
+  facultyLogin,
+  facultyRegisterCheck,
+  facultySetPassword
 };

@@ -1,44 +1,62 @@
 const pool = require('../config/db');
 
 const createAnnouncement = async (data) => {
-  const { title, content, type = 'normal', visibility = 'all', target_section_id, target_dept_id, created_by } = data;
+  const { title, content, type = 'normal', visibility = 'all', targets = [], created_by } = data;
 
   if (!title || !content || !created_by) {
     throw new Error('Title, content, and created_by are required');
   }
 
+  const connection = await pool.getConnection();
   try {
-    const [result] = await pool.execute(
+    await connection.beginTransaction();
+
+    const [result] = await connection.execute(
       `INSERT INTO announcements 
-       (title, content, type, visibility, target_section_id, target_dept_id, created_by, is_active) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-      [
-        title.trim(),
-        content.trim(),
-        type,
-        visibility,
-        visibility === 'section' ? target_section_id : null,
-        visibility === 'department' ? target_dept_id : null,
-        created_by
-      ]
+       (title, content, type, visibility, created_by, is_active) 
+       VALUES (?, ?, ?, ?, ?, 1)`,
+      [title.trim(), content.trim(), type, visibility, created_by]
     );
 
-    console.log('[AnnouncementService] Announcement created with ID:', result.insertId);
+    const announcementId = result.insertId;
+
+    // Handle multi-targets
+    if (targets && targets.length > 0) {
+      for (const target of targets) {
+        // target expected to be { type: 'section'|'department', id: number }
+        if (target.type === 'section') {
+           await connection.execute(
+             `INSERT INTO announcement_targets (announcement_id, target_section_id) VALUES (?, ?)`,
+             [announcementId, target.id]
+           );
+        } else if (target.type === 'department') {
+           await connection.execute(
+             `INSERT INTO announcement_targets (announcement_id, target_dept_id) VALUES (?, ?)`,
+             [announcementId, target.id]
+           );
+        }
+      }
+    }
+
+    await connection.commit();
+    console.log('[AnnouncementService] Announcement created with ID:', announcementId);
 
     return {
-      id: result.insertId,
+      id: announcementId,
       title,
       content,
       type,
       visibility,
-      target_section_id: visibility === 'section' ? target_section_id : null,
-      target_dept_id: visibility === 'department' ? target_dept_id : null,
+      targets,
       created_by,
       is_active: 1
     };
   } catch (error) {
+    await connection.rollback();
     console.error('[AnnouncementService] Error creating announcement:', error);
     throw new Error(`Failed to create announcement: ${error.message}`);
+  } finally {
+    connection.release();
   }
 };
 
@@ -142,9 +160,31 @@ const deleteAnnouncement = async (id) => {
   }
 };
 
+const getFacultyAnnouncements = async (faculty_id) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT a.*, 
+        GROUP_CONCAT(DISTINCT sec.name SEPARATOR ', ') as target_sections,
+        GROUP_CONCAT(DISTINCT d.name SEPARATOR ', ') as target_depts
+      FROM announcements a
+      LEFT JOIN announcement_targets at ON at.announcement_id = a.id
+      LEFT JOIN sections sec ON sec.id = at.target_section_id
+      LEFT JOIN departments d ON d.id = at.target_dept_id
+      WHERE a.created_by = ?
+      GROUP BY a.id
+      ORDER BY a.created_at DESC
+    `, [faculty_id]);
+    return rows;
+  } catch (error) {
+    console.error('[AnnouncementService] Error fetching faculty announcements:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   createAnnouncement,
   getAnnouncements,
+  getFacultyAnnouncements,
   updateAnnouncement,
   deleteAnnouncement
 };

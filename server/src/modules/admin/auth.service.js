@@ -209,10 +209,114 @@ const studentSetPassword = async (data) => {
   return { success: true, message: 'Password created successfully. You can now login.' };
 };
 
+const facultyLogin = async (data) => {
+  const { identifier, password } = data;
+
+  if (!identifier || !password) {
+    throw new Error('Registration Number/Email and Password are required');
+  }
+
+  const [users] = await pool.execute(
+    `SELECT u.*, d.name AS dept_name 
+     FROM users u 
+     LEFT JOIN departments d ON d.id = u.dept_id 
+     WHERE u.role = 'faculty' AND (u.reg_no = ? OR u.email = ?)
+     LIMIT 1`,
+    [identifier.trim(), identifier.trim()]
+  );
+
+  if (users.length === 0) {
+    throw new Error('No faculty record found. Please register first.');
+  }
+
+  const faculty = users[0];
+
+  if (Number(faculty.has_logged_in) === 0) {
+    const err = new Error('Your account is not activated. Please create your password first.');
+    err.code = 'NEED_REGISTRATION';
+    throw err;
+  }
+
+  if (Number(faculty.is_active) === 0) {
+    throw new Error('Your account is currently inactive. Please contact your administrator.');
+  }
+
+  const isMatch = await bcrypt.compare(password, faculty.password);
+  if (!isMatch) {
+    throw new Error('Incorrect password');
+  }
+
+  const token = jwt.sign(
+    { id: faculty.id, role: faculty.role, dept_id: faculty.dept_id },
+    getJwtSecret(),
+    { expiresIn: getJwtExpire() }
+  );
+
+  return {
+    token,
+    user: {
+      id: faculty.id,
+      name: faculty.name,
+      email: faculty.email,
+      reg_no: faculty.reg_no,
+      role: faculty.role,
+      dept_id: faculty.dept_id,
+      dept_name: faculty.dept_name,
+      office_location: faculty.office_location,
+      verification_status: faculty.verification_status
+    }
+  };
+};
+
+const facultyRegisterCheck = async (data) => {
+  const regNo = data?.reg_no?.trim();
+  const email = data?.email?.trim();
+
+  if (!regNo || !email) {
+    throw new Error('Registration Number and Organizational Email are required.');
+  }
+
+  const [users] = await pool.execute(
+    'SELECT id, name, has_logged_in FROM users WHERE role = "faculty" AND reg_no = ? AND email = ?',
+    [regNo, email]
+  );
+
+  if (users.length === 0) {
+    throw new Error('No faculty record found with these details. Please contact the administrator.');
+  }
+
+  const faculty = users[0];
+  if (faculty.has_logged_in) {
+    throw new Error('Account already registered. Please login with your password.');
+  }
+
+  return { faculty_id: faculty.id, name: faculty.name };
+};
+
+const facultySetPassword = async (data) => {
+  const { faculty_id, password } = data;
+
+  if (!faculty_id || !password) {
+    throw new Error('Invalid registration data');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await pool.execute(
+    'UPDATE users SET password = ?, has_logged_in = 1, verification_status = "verified" WHERE id = ? AND role = "faculty"',
+    [hashedPassword, faculty_id]
+  );
+
+  return { success: true, message: 'Faculty account activated successfully. You can now login.' };
+};
+
 module.exports = {
   signup,
   login,
   studentLogin,
   studentRegisterCheck,
-  studentSetPassword
+  studentSetPassword,
+  facultyLogin,
+  facultyRegisterCheck,
+  facultySetPassword
 };

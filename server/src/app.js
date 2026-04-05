@@ -4,6 +4,7 @@ const authRoutes = require('./modules/auth/auth.routes');
 const termsRoutes = require('./modules/terms/terms.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
 const studentRoutes = require('./modules/student/student.routes');
+const facultyRoutes = require('./modules/faculty/faculty.routes');
 
 const announcementRoutes = require('./modules/admin/announcement.routes');
 
@@ -17,6 +18,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/terms', termsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/api/faculty', facultyRoutes);
 app.use('/api/announcements', announcementRoutes);
 
 // Health check
