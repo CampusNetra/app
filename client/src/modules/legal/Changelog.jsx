@@ -1,118 +1,321 @@
-import React from 'react';
-import LegalPageLayout from './LegalPageLayout';
-import { Layers, Database, Shield, Zap, MessageSquare, Bell } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { 
+  MessageSquare, 
+  Users, 
+  Calendar, 
+  FileText, 
+  Zap, 
+  Target, 
+  ArrowRight, 
+  Database, 
+  Shield, 
+  Rocket, 
+  Code,
+  Globe
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import "../common/landing.css";
 
-const sectionStyle = {
-  marginBottom: '2rem',
-  padding: '1.5rem',
-  background: '#fcfcfd',
-  borderRadius: '16px',
-  border: '1px solid #f2f4f7'
-};
+const Changelog = () => {
+  const [percent, setPercent] = useState(0);
 
-const headerStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  marginBottom: '1rem',
-  color: '#101828'
-};
+  useEffect(() => {
+    // Premium reveal animation for progress bar
+    const timer = setTimeout(() => setPercent(68), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-const iconStyle = {
-  color: '#ff5e3a',
-  background: 'rgba(255, 94, 58, 0.1)',
-  padding: '8px',
-  borderRadius: '10px'
-};
+  return (
+    <div className="lp-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .cl-hero-title { font-size: 2.25rem !important; }
+          .cl-hero-card { margin: 0 10px 32px !important; padding: 20px !important; }
+          .cl-log-card { padding: 24px !important; border-radius: 16px !important; }
+          .cl-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .cl-footer-main { grid-template-columns: 1fr !important; gap: 32px !important; text-align: center !important; }
+          .cl-footer-brand { margin-left: 0 !important; display: flex; flex-direction: column; align-items: center; }
+          .cl-footer-links { justify-content: center !important; text-align: center; }
+          .cl-footer-col { align-items: center !important; }
+        }
+      `}</style>
 
-const listStyle = {
-  margin: 0,
-  paddingLeft: '1.25rem'
-};
+      <div className="lp-bg-orb lp-bg-orb-a" />
+      <div className="lp-bg-orb lp-bg-orb-b" />
+      <div className="lp-bg-orb lp-bg-orb-c" />
 
-const listItemStyle = {
-  fontSize: '0.9rem',
-  color: '#475467',
-  marginBottom: '0.5rem',
-  lineHeight: '1.6'
-};
-
-const Changelog = () => (
-  <LegalPageLayout
-    title="Release Notes"
-    subtitle="Tracking the evolution of Campus Netra: Features, Fixes & Infrastructure."
-  >
-    <div style={{ padding: '0.5rem' }}>
-      <div style={{ marginBottom: '2.5rem' }}>
-        <span style={{ 
-          fontSize: '11px', 
-          fontWeight: 800, 
-          color: '#ff5e3a', 
-          background: 'rgba(255, 94, 58, 0.08)',
-          padding: '4px 12px',
-          borderRadius: '100px',
-          letterSpacing: '0.1em'
-        }}>LATEST RELEASE</span>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginTop: '0.5rem' }}>v0.52.5 "Quantum Sync"</h2>
-      </div>
-
-      {/* Production Migration */}
-      <section style={sectionStyle}>
-        <div style={headerStyle}>
-          <Database size={24} style={iconStyle} />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Database Infrastructure</h3>
+      {/* Header */}
+      <header className="lp-header">
+        <div className="lp-header-wrap">
+          <Link to="/" className="lp-brand">
+            <span className="lp-brand-logo">⊙</span>
+            <span>Campus Netra</span>
+          </Link>
+          <nav className="lp-nav">
+            <Link to="/">Platform</Link>
+            <Link to="/">Resources</Link>
+            <Link to="/">Support</Link>
+          </nav>
+          <Link to="/" className="lp-login-btn" style={{ textDecoration: 'none' }}>
+            Home <ArrowRight size={16} />
+          </Link>
         </div>
-        <ul style={listStyle}>
-          <li style={listItemStyle}><strong>Unified D1 Schema:</strong> Completely merged and optimized SQLite schema for Cloudflare Workers.</li>
-          <li style={listItemStyle}><strong>Constraint Evolution:</strong> Re-indexed all communication channels to support advanced department-wide broadcast logic.</li>
-          <li style={listItemStyle}><strong>Dialect-Aware SQL:</strong> Implemented a deep-translation layer for complex MySQL sorting and conflict patterns on D1.</li>
-        </ul>
-      </section>
+      </header>
 
-      {/* Persistent Sessions */}
-      <section style={sectionStyle}>
-        <div style={headerStyle}>
-          <Shield size={24} style={iconStyle} />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Identity & Security</h3>
+      <main className="lp-main">
+        {/* HERO SECTION */}
+        <section className="lp-hero">
+          <div className="lp-hero-content">
+            <p className="lp-kicker">TRACKING THE EVOLUTION TOWARDS GALGOTIAS PRODUCTION</p>
+            <h1 className="cl-hero-title" style={{ marginBottom: '16px', fontSize: '3.5rem' }}>Nexus Evolution Log</h1>
+            <p className="lp-subtitle" style={{ maxWidth: '700px', margin: '0 auto 40px' }}>
+              Transparency matters. Follow our journey as we scale from limited Alpha to 
+              University-wide Beta phase. Building the next generation of campus communication.
+            </p>
+
+            {/* ALPHA STATUS & PROGRESS */}
+            <div className="cl-hero-card" style={{
+              maxWidth: '500px',
+              margin: '0 auto 48px',
+              padding: '24px',
+              background: 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '24px',
+              border: '1px solid rgba(244, 94, 18, 0.1)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                <span style={{
+                  background: 'rgba(217, 45, 32, 0.08)',
+                  padding: '6px 16px',
+                  borderRadius: '100px',
+                  color: '#d92d20',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  border: '1px solid rgba(217, 45, 32, 0.1)'
+                }}>
+                  <div style={{ width: 6, height: 6, background: '#d92d20', borderRadius: '50%', boxShadow: '0 0 10px #d92d20' }} />
+                  CURRENT STATUS: ALPHA
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                <span>Phase I: Ecosystem Stabilization</span>
+                <span style={{ color: '#f45e12' }}>{percent}% to Beta</span>
+              </div>
+              
+              <div style={{ height: '14px', background: '#e2e8f0', borderRadius: '100px', overflow: 'hidden', padding: '3px' }}>
+                <div style={{ 
+                  width: `${percent}%`, 
+                  height: '100%', 
+                  background: 'linear-gradient(90deg, #f45e12 0%, #ff8a3d 100%)',
+                  borderRadius: '100px',
+                  boxShadow: '0 0 15px rgba(244, 94, 18, 0.4)',
+                  transition: 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                }} />
+              </div>
+              <p style={{ marginTop: '16px', fontSize: '12px', color: '#475569', fontWeight: 500 }}>
+                Next Major Milestone: <strong>Public Beta Entrance</strong> (Est. 1 Week)
+              </p>
+            </div>
+
+            <div className="lp-hero-actions">
+              <a href="#logs" className="lp-cta-primary" style={{ textDecoration: 'none' }}>Explore Builds</a>
+              <Link to="/" className="lp-cta-secondary" style={{ textDecoration: 'none' }}>Platform Details</Link>
+            </div>
+          </div>
+        </section>
+
+        {/* LOGS SECTION */}
+        <section id="logs" style={{ padding: '4rem 0 8rem' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 20px' }}>
+            
+            {/* SOLARIS v0.58.6 */}
+            <div className="cl-log-card" style={{ 
+              background: 'white', 
+              borderRadius: '24px', 
+              padding: '40px', 
+              border: '1px solid #e2e8f0',
+              marginBottom: '3rem',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <span style={{ background: '#f45e12', color: 'white', padding: '4px 16px', borderRadius: '100px', fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em' }}>LATEST BUILD</span>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>6th April 2026</span>
+                <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}></span>
+              </div>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '32px' }}>v0.58.6 "Solaris"</h2>
+              
+              <div className="cl-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#f45e12' }}>
+                    <Shield size={20} />
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Session Resilience</h3>
+                  </div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li style={{ marginBottom: '12px' }}>• Advanced LocalStorage migration for session persistence.</li>
+                    <li>• Smart Route Guards preventing unauthorized dashboard access.</li>
+                  </ul>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#f45e12' }}>
+                    <Database size={20} />
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Structural Integrity</h3>
+                  </div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li style={{ marginBottom: '12px' }}>• Unified D1 production schema synchronization.</li>
+                    <li>• Dialect-aware SQL translation for D1 stability.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* QUANTUM SYNC v0.52.5 */}
+            <div className="cl-log-card" style={{ 
+              background: 'white', 
+              borderRadius: '24px', 
+              padding: '40px', 
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <span style={{ background: '#f1f5f9', color: '#64748b', padding: '4px 16px', borderRadius: '100px', fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em' }}>PREVIOUS RELEASE</span>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>6th April 2026</span>
+                <a 
+                  href="https://github.com/CampusNetra/app/commit/3ef7e2b8977b36763dfaa06163f05742b0b50c9c"
+                  target="_blank"
+                  rel="noopener"
+                  style={{ 
+                    color: '#f45e12', 
+                    fontSize: '13px', 
+                    fontWeight: 700, 
+                    fontFamily: 'JetBrains Mono, monospace',
+                    textDecoration: 'none',
+                    background: 'rgba(244, 94, 18, 0.05)',
+                    padding: '2px 8px',
+                    borderRadius: '6px'
+                  }}
+                >node: 3ef7e2b</a>
+              </div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#334155', marginBottom: '40px' }}>v0.52.5 "Quantum Sync"</h2>
+              
+              <div className="cl-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+                <section>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#101828' }}>
+                    <Database size={20} style={{ color: '#f45e12' }} />
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0 }}>Database Infrastructure</h3>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '20px', color: '#475467', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li><strong>Unified D1 Schema:</strong> Completely merged/optimized SQLite schema for Cloudflare.</li>
+                    <li><strong>Constraint Evolution:</strong> Re-indexed channels for department-wide broadcast logic.</li>
+                    <li><strong>Dialect-Aware SQL:</strong> Deep-translation layer for complex MySQL sorting patterns.</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#101828' }}>
+                    <Shield size={20} style={{ color: '#f45e12' }} />
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0 }}>Identity & Security</h3>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '20px', color: '#475467', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li><strong>Persistent Sessions:</strong> Hardened login model with multi-role LocalStorage persistency.</li>
+                    <li><strong>Role-Based Guards:</strong> New global route protection for Student/Faculty/Admin dashboards.</li>
+                    <li><strong>Smart Authentication:</strong> Session-aware entry points that automatically bypass landing.</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#101828' }}>
+                    <MessageSquare size={20} style={{ color: '#f45e12' }} />
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0 }}>Communication Suite</h3>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '20px', color: '#475467', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li><strong>Optimized Group Chat:</strong> Corrected message sorting and owner-attribution logic.</li>
+                    <li><strong>Full Modules Activation:</strong> Integrated Clubs, Assignments, Materials, and Announcements.</li>
+                    <li><strong>Read Tracking:</strong> Enhanced read-status markers for section-based groups.</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#101828' }}>
+                    <Zap size={20} style={{ color: '#f45e12' }} />
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0 }}>Design & UX</h3>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '20px', color: '#475467', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li><strong>Performance Badges:</strong> New striking version tracking badge on global landing.</li>
+                    <li><strong>Unified Styles:</strong> Synchronized student/faculty UI components for cohesive experience.</li>
+                    <li><strong>Motion Transitions:</strong> Improved route transitions and entrance animations.</li>
+                  </ul>
+                </section>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="lp-footer" style={{ borderTop: '1px solid #e2e8f0', background: 'var(--color-slate)', padding: '80px 0 0' }}>
+        <div className="lp-footer-wrap">
+          <div className="cl-footer-main" style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1.5fr 1fr 1fr', 
+            gap: '40px', 
+            paddingBottom: '60px',
+            maxWidth: '1280px',
+            margin: '0 auto'
+          }}>
+            <div className="cl-footer-brand">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '20px', fontWeight: 700, color: 'white', marginBottom: '16px' }}>
+                <span style={{ color: '#f45e12', fontSize: '28px' }}>⊙</span>
+                <span>Campus Netra</span>
+              </div>
+              <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', lineHeight: 1.6, maxWidth: '320px' }}>
+                The unified communication ecosystem for modern universities. 
+                Built for clarity, speed, and institutional harmony.
+              </p>
+            </div>
+            
+            <div className="cl-footer-col" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Platform</h4>
+              <Link to="/" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '14px' }}>Dashboard</Link>
+              <Link to="/" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '14px' }}>Academics</Link>
+              <Link to="/" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '14px' }}>Resources</Link>
+            </div>
+
+            <div className="cl-footer-col" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Legal</h4>
+              <Link to="/privacy-policy" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '14px' }}>Privacy Policy</Link>
+              <Link to="/terms-of-service" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '14px' }}>Terms of Service</Link>
+              <Link to="/changelog" style={{ color: '#f45e12', textDecoration: 'none', fontSize: '14px', fontWeight: 700 }}>Changelog</Link>
+            </div>
+          </div>
+
+          <div className="lp-footer-bottom" style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '32px 0', 
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            maxWidth: '1280px',
+            margin: '0 auto'
+          }}>
+            <div className="lp-footer-copyright">
+              <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '13px' }}>&copy; 2026 Campus Netra. Built by Syntax-Sinners for Galgotias University.</p>
+            </div>
+            <Link to="/changelog" className="lp-version-badge" style={{ textDecoration: 'none', background: 'rgba(255, 255, 255, 0.05)' }}>
+              <span className="lp-version-dot" />
+              alpha-0.58.8
+            </Link>
+          </div>
         </div>
-        <ul style={listStyle}>
-          <li style={listItemStyle}><strong>Persistent Sessions:</strong> Hardened login model with multi-role LocalStorage persistency.</li>
-          <li style={listItemStyle}><strong>Role-Based Guards:</strong> New global route protection for authenticated Student, Faculty, and Admin dashboards.</li>
-          <li style={listItemStyle}><strong>Smart Authentication:</strong> Session-aware entry points that automatically bypass landing pages if authenticated.</li>
-        </ul>
-      </section>
-
-      {/* Core Communication */}
-      <section style={sectionStyle}>
-        <div style={headerStyle}>
-          <MessageSquare size={24} style={iconStyle} />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Communication Suite</h3>
-        </div>
-        <ul style={listStyle}>
-          <li style={listItemStyle}><strong>Optimized Group Chat:</strong> Corrected message sorting and owner-attribution logic for Faculty channels.</li>
-          <li style={listItemStyle}><strong>Full Modules Activation:</strong> Integrated Clubs, Assignments, Materials, and Announcements into the production environment.</li>
-          <li style={listItemStyle}><strong>Read Tracking:</strong> Enhanced read-status markers for section-based student groups.</li>
-        </ul>
-      </section>
-
-      {/* Design System */}
-      <section style={sectionStyle}>
-        <div style={headerStyle}>
-          <Zap size={24} style={iconStyle} />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Design & UX</h3>
-        </div>
-        <ul style={listStyle}>
-          <li style={listItemStyle}><strong>Performance Badges:</strong> New "Striking" version tracking badge on the global landing page.</li>
-          <li style={listItemStyle}><strong>Unified Styles:</strong> Synchronized student and faculty UI components for a more cohesive platform experience.</li>
-          <li style={listItemStyle}><strong>Motion Transitions:</strong> Improved route transitions and entrance animations in the student portal.</li>
-        </ul>
-      </section>
-
-      <footer style={{ textAlign: 'center', marginTop: '3rem', fontSize: '0.85rem', color: '#98a2b3' }}>
-        Next Update: Project "Nexus" coming late April 2026.
       </footer>
     </div>
-  </LegalPageLayout>
-);
+  );
+};
 
 export default Changelog;
