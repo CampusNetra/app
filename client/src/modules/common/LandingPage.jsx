@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, Users, Calendar, FileText, Zap, Target, X, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './landing.css';
 
 const LandingPage = () => {
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for existing sessions and redirect
+    if (localStorage.getItem('token')) {
+      navigate('/admin/dashboard');
+    } else if (localStorage.getItem('student_token')) {
+      navigate('/student/feed');
+    } else if (localStorage.getItem('faculty_token')) {
+      navigate('/faculty/dashboard');
+    }
+  }, [navigate]);
 
   const handleRoleSelect = (role) => {
     setOpenLoginModal(false);
@@ -286,6 +297,10 @@ const LandingPage = () => {
           <div className="lp-footer-copyright">
             <p>&copy; 2026 Campus Netra. Built by Syntax-Sinners for Galgotias University.</p>
           </div>
+          <Link to="/changelog" className="lp-version-badge">
+            <span className="lp-version-dot" />
+            alpha-0.52.5
+          </Link>
         </div>
       </footer>
     </div>

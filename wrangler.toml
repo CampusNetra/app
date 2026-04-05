@@ -7,8 +7,8 @@ compatibility_flags = [ "nodejs_compat" ]
 [[d1_databases]]
 binding = "DB"
 database_name = "campus_netra"
-database_id = "0702e90d-bb0e-4046-8a99-1f9d7ef66ac7"
-preview_database_id = "0702e90d-bb0e-4046-8a99-1f9d7ef66ac7"
+database_id = "084fd730-2663-4440-8294-ba29c0753488"
+preview_database_id = "084fd730-2663-4440-8294-ba29c0753488"
 
 [assets]
 directory = "./client/dist"
