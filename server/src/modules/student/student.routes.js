@@ -6,6 +6,7 @@ const chatController = require('./chat.controller');
 
 router.get('/feed', authMiddleware, studentController.getFeed);
 router.get('/profile', authMiddleware, studentController.getProfile);
+router.post('/polls/:id/respond', authMiddleware, studentController.respondToPoll);
 
 // Chat Routes
 router.get('/chat/channels', authMiddleware, chatController.getChannels);
