@@ -12,6 +12,7 @@ router.get('/chat/channels', authMiddleware, chatController.getChannels);
 router.get('/chat/channels/:id', authMiddleware, chatController.getChannelDetails);
 router.get('/chat/channels/:id/messages', authMiddleware, chatController.getChannelMessages);
 router.post('/chat/channels/:id/messages', authMiddleware, chatController.sendMessage);
+router.post('/chat/channels/:id/read', authMiddleware, chatController.markAsRead);
 router.get('/chat/messages/:id/replies', authMiddleware, chatController.getMessageReplies);
 router.put('/chat/messages/:id', authMiddleware, chatController.editMessage);
 router.delete('/chat/messages/:id', authMiddleware, chatController.deleteMessage);

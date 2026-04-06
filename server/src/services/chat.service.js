@@ -32,12 +32,13 @@ const getStudentChannels = async (user_id, dept_id, section_id) => {
         END) AS member_count,
         (SELECT m.content FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message,
         (SELECT m.created_at FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message_time,
-        (SELECT u.name FROM messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_sender
+        (SELECT u.name FROM messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_sender,
+        (SELECT COUNT(*) FROM messages m WHERE m.channel_id = c.id AND m.sender_id <> ? AND m.created_at > COALESCE((SELECT m2.created_at FROM messages m2 WHERE m2.id = (SELECT cm.last_read_message_id FROM channel_members cm WHERE cm.channel_id = c.id AND cm.user_id = ?)), '1970-01-01')) AS unread_count
       FROM channels c
       WHERE c.dept_id = ? 
         AND (c.section_id IS NULL OR c.section_id = ?)
       ORDER BY FIELD(c.type, 'branch', 'section', 'subject'), c.created_at DESC`,
-      [dept_id, section_id]
+      [user_id, user_id, dept_id, section_id]
     );
 
     return (rows || []).map(annotateStudentChannel);
@@ -61,16 +62,17 @@ const getFacultyChannels = async (faculty_id, dept_id) => {
         (SELECT m.content FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message,
         (SELECT m.created_at FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_message_time,
         (SELECT u.name FROM messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.channel_id = c.id AND m.parent_id IS NULL ORDER BY m.created_at DESC LIMIT 1) AS last_sender,
-        (SELECT COUNT(*) FROM messages m WHERE m.channel_id = c.id AND m.created_at > COALESCE((SELECT m2.created_at FROM messages m2 WHERE m2.id = (SELECT cm.last_read_message_id FROM channel_members cm WHERE cm.channel_id = c.id AND cm.user_id = ?)), '1970-01-01')) AS unread_count
+        (SELECT COUNT(*) FROM messages m WHERE m.channel_id = c.id AND m.sender_id <> ? AND m.created_at > COALESCE((SELECT m2.created_at FROM messages m2 WHERE m2.id = (SELECT cm.last_read_message_id FROM channel_members cm WHERE cm.channel_id = c.id AND cm.user_id = ?)), '1970-01-01')) AS unread_count
       FROM channels c
       LEFT JOIN subject_offerings so ON so.id = c.subject_offering_id
       LEFT JOIN channel_members cm_check ON cm_check.channel_id = c.id AND cm_check.user_id = ?
       WHERE (c.dept_id = ? AND c.type IN ('branch', 'general')) -- Department Broadcasts
+        OR (c.type = 'general' AND c.visibility = 'department' AND c.dept_id = ?) -- Explicit department general visibility for faculty
          OR (so.faculty_id = ?) -- The assigned faculty for this specific subject/section
          OR (cm_check.id IS NOT NULL) -- Explicit membership (Coordinator, etc.)
       GROUP BY c.id
       ORDER BY FIELD(c.type, 'branch', 'section', 'subject'), last_message_time DESC, c.created_at DESC`,
-      [faculty_id, dept_id, faculty_id, faculty_id]
+      [faculty_id, faculty_id, faculty_id, dept_id, dept_id, faculty_id]
     );
 
     return (rows || []).map(annotateStudentChannel);

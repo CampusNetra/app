@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ChatList from './chat/ChatList';
 import ChatWindow from './chat/ChatWindow';
 import api from '../../api';
-import StudentDock from './StudentDock';
 import './chat/chat-student.css';
 
 const StudentChatPage = () => {
@@ -45,7 +44,6 @@ const StudentChatPage = () => {
     setActiveChannel(null);
   };
 
-  const token = localStorage.getItem('student_token') || localStorage.getItem('token');
   const studentUser = JSON.parse(localStorage.getItem('student_user') || '{}');
 
   return (
@@ -53,8 +51,7 @@ const StudentChatPage = () => {
       <div className="st-mobile-frame feed-v2 p-0 overflow-hidden relative">
         {view === 'list' ? (
           <>
-            <ChatList onSelectChannel={handleOpenChannel} />
-            <StudentDock active="chat" />
+            <ChatList onSelectChannel={handleOpenChannel} currentUserId={studentUser?.id} />
           </>
         ) : loadingWindow || !activeChannel ? (
           <div className="st-chat-state">Loading chat...</div>
