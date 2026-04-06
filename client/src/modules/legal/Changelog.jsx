@@ -21,7 +21,7 @@ const Changelog = () => {
 
   useEffect(() => {
     // Premium reveal animation for progress bar
-    const timer = setTimeout(() => setPercent(68), 500);
+    const timer = setTimeout(() => setPercent(85), 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -134,7 +134,7 @@ const Changelog = () => {
         <section id="logs" style={{ padding: '4rem 0 8rem' }}>
           <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 20px' }}>
             
-            {/* SOLARIS v0.58.6 */}
+            {/* AURORA v0.62.1 */}
             <div className="cl-log-card" style={{ 
               background: 'white', 
               borderRadius: '24px', 
@@ -145,10 +145,74 @@ const Changelog = () => {
             }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
                 <span style={{ background: '#f45e12', color: 'white', padding: '4px 16px', borderRadius: '100px', fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em' }}>LATEST BUILD</span>
-                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>6th April 2026</span>
-                <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}></span>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>7th April 2026</span>
+                <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' }}>12 PATCHES SHIPPED</span>
               </div>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '32px' }}>v0.58.6 "Solaris"</h2>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '32px' }}>v0.62.1 "Aurora"</h2>
+              
+              <div className="cl-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#f45e12' }}>
+                    <MessageSquare size={20} />
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Faculty Delivery Layer</h3>
+                  </div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li style={{ marginBottom: '12px' }}>• Faculty dashboard, subjects, announcements, assignments, materials, polls, and profile were refreshed for the mobile-first faculty workflow.</li>
+                    <li>• Missing faculty announcement APIs were wired so faculty posts now save correctly instead of dying at route level.</li>
+                  </ul>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#f45e12' }}>
+                    <Database size={20} />
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Feed & Poll Integrity</h3>
+                  </div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li style={{ marginBottom: '12px' }}>• Student feed now merges faculty announcements, assignments, and polls through section and department targeting.</li>
+                    <li>• Polls now support one-time voting, student-side result visibility, and faculty-side percentage breakdowns per option.</li>
+                  </ul>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#f45e12' }}>
+                    <Zap size={20} />
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Release Notes</h3>
+                  </div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+                    <li style={{ marginBottom: '12px' }}>• Login and landing release markers were bumped to the 62 line for this iteration.</li>
+                    <li>• Beta completion has been raised to 85% as the faculty-student communication loop is now largely connected.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* SOLARIS v0.58.6 */}
+            <div className="cl-log-card" style={{ 
+              background: 'white', 
+              borderRadius: '24px', 
+              padding: '40px', 
+              border: '1px solid #e2e8f0',
+              marginBottom: '3rem',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <span style={{ background: '#f1f5f9', color: '#64748b', padding: '4px 16px', borderRadius: '100px', fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em' }}>PREVIOUS RELEASE</span>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>6th April 2026</span>
+                <a 
+                  href="https://github.com/CampusNetra/app/commit/5c6011068c6cc484adb4b0be5e31cb62966550af"
+                  target="_blank"
+                  rel="noopener"
+                  style={{ 
+                    color: '#f45e12', 
+                    fontSize: '13px', 
+                    fontWeight: 700, 
+                    fontFamily: 'JetBrains Mono, monospace',
+                    textDecoration: 'none',
+                    background: 'rgba(244, 94, 18, 0.05)',
+                    padding: '2px 8px',
+                    borderRadius: '6px'
+                  }}
+                >commit: 5c60110</a>
+              </div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#334155', marginBottom: '32px' }}>v0.58.6 "Solaris"</h2>
               
               <div className="cl-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
                 <div>
@@ -158,7 +222,7 @@ const Changelog = () => {
                   </div>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
                     <li style={{ marginBottom: '12px' }}>• Advanced LocalStorage migration for session persistence.</li>
-                    <li>• Smart Route Guards preventing unauthorized dashboard access.</li>
+                    <li>• Smart route guards preventing unauthorized dashboard access.</li>
                   </ul>
                 </div>
                 <div>
@@ -309,7 +373,7 @@ const Changelog = () => {
             </div>
             <Link to="/changelog" className="lp-version-badge" style={{ textDecoration: 'none', background: 'rgba(255, 255, 255, 0.05)' }}>
               <span className="lp-version-dot" />
-              alpha-0.58.8
+              alpha-0.62.1
             </Link>
           </div>
         </div>

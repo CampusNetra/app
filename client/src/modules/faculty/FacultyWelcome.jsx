@@ -30,10 +30,16 @@ const FacultyWelcome = () => {
       });
 
       const { token, user } = res.data;
+      
+      // Sanitize other sessions to prevent role-conflicts
+      localStorage.removeItem('student_token');
+      localStorage.removeItem('student_user');
+      localStorage.removeItem('token');
+      
       localStorage.setItem('faculty_token', token);
       localStorage.setItem('faculty_user', JSON.stringify(user));
       
-      // Navigate to faculty dashboard (to be created)
+      // Navigate to faculty dashboard
       navigate('/faculty/dashboard');
     } catch (err) {
       if (err.response?.data?.error?.includes('activated') || err.response?.data?.error?.includes('password')) {
@@ -51,6 +57,12 @@ const FacultyWelcome = () => {
       <div className="st-mobile-frame entrance-animation">
         <main className="st-welcome-main">
           {/* Hero Section */}
+          <div className="pt-2 px-6">
+            <Link to="/" className="text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-2 text-[11px] uppercase font-black tracking-[0.15em] no-underline">
+              <ArrowRight size={14} className="rotate-180" strokeWidth={3} /> Home
+            </Link>
+          </div>
+
           <div className="st-welcome-hero">
              <div className="st-hero-chip bg-indigo-600 shadow-indigo-200">
                 <Briefcase size={44} className="text-white" strokeWidth={2.5} />
@@ -140,6 +152,26 @@ const FacultyWelcome = () => {
                Designed & Developed by <a href="https://syntax-sinners.github.io/web/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-black hover:underline underline-offset-4 decoration-2">Syntax Sinners</a>
              </p>
           </footer>
+          <div className="flex justify-center mt-6">
+             <div style={{
+                background: 'rgba(217, 45, 32, 0.08)',
+                padding: '6px 14px',
+                borderRadius: '100px',
+                color: '#d92d20',
+                fontSize: '10px',
+                fontWeight: 900,
+                letterSpacing: '0.1em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: '1px solid rgba(217, 45, 32, 0.15)',
+                fontFamily: 'JetBrains Mono, monospace',
+                boxShadow: '0 4px 15px rgba(217, 45, 32, 0.1)'
+             }}>
+                <div style={{ width: 6, height: 6, background: '#d92d20', borderRadius: '50%', boxShadow: '0 0 10px #d92d20', animation: 'lp-pulse 2s infinite' }} />
+                ALPHA-0.62.1
+             </div>
+          </div>
         </main>
       </div>
 

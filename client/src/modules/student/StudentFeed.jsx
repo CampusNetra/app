@@ -14,7 +14,10 @@ import {
   Search,
   LayoutGrid,
   Zap,
-  Clock
+  Clock,
+  ClipboardCheck,
+  BarChart3,
+  Paperclip
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
@@ -43,6 +46,38 @@ const formatDate = (dateStr) => {
   });
 };
 
+const getPostMeta = (post) => {
+  if (post.category === 'assignment') {
+    return {
+      label: 'Assignment',
+      icon: ClipboardCheck,
+      accent: 'assignment',
+      description: post.subjects || post.sections || 'Coursework'
+    };
+  }
+
+  if (post.category === 'poll') {
+    return {
+      label: 'Poll',
+      icon: BarChart3,
+      accent: 'poll',
+      description: post.target_sections || 'Faculty feedback'
+    };
+  }
+
+  return {
+    label:
+      post.announcementType === 'important'
+        ? 'Priority Alert'
+        : post.announcementType === 'event'
+          ? 'Upcoming Event'
+          : 'Announcement',
+    icon: Megaphone,
+    accent: post.announcementType === 'important' ? 'important' : post.announcementType === 'event' ? 'event' : 'announcement',
+    description: post.target_sections || post.target_departments || post.source || 'Campus Netra'
+  };
+};
+
 const StudentFeed = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
@@ -51,6 +86,8 @@ const StudentFeed = () => {
   const [error, setError] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [submittingPollId, setSubmittingPollId] = useState(null);
 
   const drawerItems = [
     { id: 'alerts', label: 'Alerts', hint: 'Priority updates and reminders', icon: BellRing, path: '/student/alerts' },
@@ -60,22 +97,50 @@ const StudentFeed = () => {
   ];
 
   const handleLogout = () => {
-    // Clear session storage
-    sessionStorage.removeItem('student_token');
-    sessionStorage.removeItem('student_user');
-    
-    // Clear persistent login cache to prevent auto-login loop
+    localStorage.removeItem('student_token');
+    localStorage.removeItem('student_user');
     localStorage.removeItem('student_login');
-    
     navigate('/student/welcome', { replace: true });
   };
 
+  const handlePollVote = async (pollId, optionIndex) => {
+    const existingPoll = feedPosts.find((post) => post.category === 'poll' && post.id === pollId);
+    if (existingPoll?.user_response !== null && existingPoll?.user_response !== undefined) {
+      return;
+    }
+
+    try {
+      setSubmittingPollId(pollId);
+      const response = await api.post(`/student/polls/${pollId}/respond`, {
+        option_index: optionIndex
+      });
+
+      setFeedPosts((currentPosts) =>
+        currentPosts.map((post) =>
+          post.category === 'poll' && post.id === pollId
+            ? {
+                ...post,
+                user_response: optionIndex,
+                response_count: response?.data?.response_count ?? post.response_count,
+                option_results: response?.data?.option_results ?? post.option_results
+              }
+            : post
+        )
+      );
+    } catch (err) {
+      const message = err?.response?.data?.error || 'Failed to submit vote.';
+      setError(message);
+    } finally {
+      setSubmittingPollId(null);
+    }
+  };
+
   useEffect(() => {
-    const studentUser = JSON.parse(sessionStorage.getItem('student_user') || '{}');
+    const studentUser = JSON.parse(localStorage.getItem('student_user') || '{}');
     setUser(studentUser);
 
     const loadFeed = async () => {
-      const token = sessionStorage.getItem('student_token');
+      const token = localStorage.getItem('student_token');
       if (!token) {
         navigate('/student/welcome', { replace: true });
         return;
@@ -97,36 +162,44 @@ const StudentFeed = () => {
     loadFeed();
   }, [navigate]);
 
-  const [searchTerm, setSearchTerm] = useState('');
-
   const posts = useMemo(() => {
     let filtered = feedPosts;
-    
+
     if (activeTab !== 'all') {
-      filtered = filtered.filter((post) => (post.announcementType || 'normal') === activeTab);
+      filtered = filtered.filter((post) => {
+        if (activeTab === 'important') return post.announcementType === 'important';
+        return post.category === activeTab;
+      });
     }
-    
+
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (post) =>
-          post.title?.toLowerCase().includes(term) ||
-          post.content?.toLowerCase().includes(term)
+      filtered = filtered.filter((post) =>
+        [
+          post.title,
+          post.content,
+          post.subjects,
+          post.sections,
+          post.source,
+          ...(post.options || [])
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(term)
       );
     }
-    
+
     return filtered;
   }, [activeTab, feedPosts, searchTerm]);
 
   return (
     <div className="st-shell">
       <div className="st-mobile-frame feed-v2">
-        {/* Header V2 */}
         <header className="st-feed-header-v2">
           <div className="st-header-content">
             <div className="st-profile-meta">
               <h2>Good morning, {user?.name?.split(' ')[0] || 'Student'}</h2>
-              <p>Check out what's happening today</p>
             </div>
             <div className="st-header-actions">
               <button className="st-action-circle" onClick={() => setIsDrawerOpen(true)}>
@@ -134,37 +207,33 @@ const StudentFeed = () => {
               </button>
             </div>
           </div>
-          
+
           <div className="st-feed-search-bar">
             <Search size={18} className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search announcements..." 
+            <input
+              type="text"
+              placeholder="Search feed..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </header>
 
-        {/* Categories Bar */}
         <div className="st-categories-bar scroll-x custom-scrollbar-hide">
-          <button 
-            className={`st-cat-pill ${activeTab === 'all' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('all')}
-          >
+          <button className={`st-cat-pill ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
             <LayoutGrid size={16} /> <span>All</span>
           </button>
-          <button 
-            className={`st-cat-pill ${activeTab === 'important' ? 'important active' : ''}`} 
-            onClick={() => setActiveTab('important')}
-          >
-            <Zap size={16} /> <span>Important</span>
+          <button className={`st-cat-pill ${activeTab === 'announcement' ? 'active' : ''}`} onClick={() => setActiveTab('announcement')}>
+            <Megaphone size={16} /> <span>Announcements</span>
           </button>
-          <button 
-            className={`st-cat-pill ${activeTab === 'event' ? 'event active' : ''}`} 
-            onClick={() => setActiveTab('event')}
-          >
-            <Calendar size={16} /> <span>Events</span>
+          <button className={`st-cat-pill ${activeTab === 'assignment' ? 'active' : ''}`} onClick={() => setActiveTab('assignment')}>
+            <ClipboardCheck size={16} /> <span>Assignments</span>
+          </button>
+          <button className={`st-cat-pill ${activeTab === 'poll' ? 'active' : ''}`} onClick={() => setActiveTab('poll')}>
+            <BarChart3 size={16} /> <span>Polls</span>
+          </button>
+          <button className={`st-cat-pill ${activeTab === 'important' ? 'important active' : ''}`} onClick={() => setActiveTab('important')}>
+            <Zap size={16} /> <span>Important</span>
           </button>
         </div>
 
@@ -175,9 +244,9 @@ const StudentFeed = () => {
               <div className="shimmer-card"></div>
             </div>
           )}
-          
+
           {!isLoading && error && <p className="st-feed-error">{error}</p>}
-          
+
           {!isLoading && !error && posts.length === 0 && (
             <div className="st-empty-state">
               <div className="empty-icon-wrap">
@@ -187,7 +256,7 @@ const StudentFeed = () => {
                 <>
                   <h3>No matches found</h3>
                   <p>We couldn't find anything matching "{searchTerm}". Try a different keyword.</p>
-                  <button 
+                  <button
                     onClick={() => setSearchTerm('')}
                     className="st-card-action-btn"
                     style={{ background: '#0f172a', color: 'white', border: 'none', marginTop: '16px' }}
@@ -198,78 +267,167 @@ const StudentFeed = () => {
               ) : (
                 <>
                   <h3>Quiet for now</h3>
-                  <p>No new announcements in this category.</p>
+                  <p>No new faculty posts in this category.</p>
                 </>
               )}
             </div>
           )}
 
-          {!isLoading && !error && posts.map((post) => (
-            <article 
-              key={post.id} 
-              className={`st-feed-card ${post.announcementType === 'important' ? 'is-urgent' : ''} ${post.announcementType === 'event' ? 'is-event' : ''}`}
-            >
-              {post.image_url && (
-                <div className="st-card-image">
-                  <img src={post.image_url} alt={post.title} />
-                  <div className="st-image-overlay">
-                     {post.announcementType === 'event' && <span className="st-banner-pill">EVENT</span>}
-                  </div>
-                </div>
-              )}
-              
-              <div className="st-card-body">
-                <div className="st-card-header">
-                  <div className="st-card-type">
-                    <span className="type-dot"></span>
-                    {post.announcementType === 'important' ? 'Priority Alert' : 
-                     post.announcementType === 'event' ? 'Upcoming Event' : 'Campus News'}
-                  </div>
-                  <span className="st-card-time">
-                    <Clock size={12} /> {formatRelativeTime(post.createdAt)}
-                  </span>
-                </div>
+          {!isLoading && !error && posts.map((post) => {
+            const meta = getPostMeta(post);
+            const MetaIcon = meta.icon;
 
-                <h3 className="st-card-title">{post.title}</h3>
-                
-                {post.announcementType === 'event' && (
+            return (
+              <article
+                key={`${post.category}-${post.id}`}
+                className={`st-feed-card ${post.announcementType === 'important' ? 'is-urgent' : ''} ${post.announcementType === 'event' ? 'is-event' : ''}`}
+              >
+                {post.image_url && (
+                  <div className="st-card-image">
+                    <img src={post.image_url} alt={post.title} />
+                    <div className="st-image-overlay">
+                      {post.announcementType === 'event' && <span className="st-banner-pill">EVENT</span>}
+                    </div>
+                  </div>
+                )}
+
+                <div className="st-card-body">
+                  <div className="st-card-header">
+                    <div className="st-card-type">
+                      <span className="type-dot"></span>
+                      {meta.label}
+                    </div>
+                    <span className="st-card-time">
+                      <Clock size={12} /> {formatRelativeTime(post.createdAt)}
+                    </span>
+                  </div>
+
+                  <h3 className="st-card-title">{post.title}</h3>
+
                   <div className="st-event-meta-block">
-                    {post.event_date && (
+                    <div className="st-meta-item">
+                      <MetaIcon size={14} />
+                      <span>{meta.description}</span>
+                    </div>
+                    {post.source && (
+                      <div className="st-meta-item">
+                        <GraduationCap size={14} />
+                        <span>{post.source}</span>
+                      </div>
+                    )}
+                    {post.category === 'assignment' && post.due_date && (
+                      <div className="st-meta-item">
+                        <Calendar size={14} />
+                        <span>Due {formatDate(post.due_date)}</span>
+                      </div>
+                    )}
+                    {post.category === 'poll' && (
+                      <div className="st-meta-item">
+                        <Users size={14} />
+                        <span>{post.response_count || 0} responses so far</span>
+                      </div>
+                    )}
+                    {post.announcementType === 'event' && post.event_date && (
                       <div className="st-meta-item">
                         <Calendar size={14} />
                         <span>{formatDate(post.event_date)}</span>
                       </div>
                     )}
-                    {post.event_location && (
+                    {post.announcementType === 'event' && post.event_location && (
                       <div className="st-meta-item">
                         <MapPin size={14} />
                         <span>{post.event_location}</span>
                       </div>
                     )}
                   </div>
-                )}
 
-                <p className="st-card-content">{post.content}</p>
+                  <p className="st-card-content">{post.content}</p>
 
-                {post.event_registration_url && (
-                  <a 
-                    href={post.event_registration_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="st-card-action-btn"
-                  >
-                    <span>Register Now</span>
-                    <ExternalLink size={16} />
-                  </a>
-                )}
-              </div>
-            </article>
-          ))}
+                  {post.category === 'poll' && (post.options || []).length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
+                      {(post.option_results || []).slice(0, 4).map((result) => (
+                        <button
+                          key={result.option_index}
+                          onClick={() => handlePollVote(post.id, result.option_index)}
+                          disabled={submittingPollId === post.id || (post.user_response !== null && post.user_response !== undefined)}
+                          style={{
+                            background: '#f8fafc',
+                            border: post.user_response === result.option_index ? '1px solid #fdba74' : '1px solid #e2e8f0',
+                            borderRadius: 14,
+                            padding: '12px 14px',
+                            fontSize: 13,
+                            color: post.user_response === result.option_index ? '#ea580c' : '#475569',
+                            fontWeight: 600,
+                            textAlign: 'left',
+                            cursor: submittingPollId === post.id ? 'wait' : (post.user_response !== null && post.user_response !== undefined ? 'default' : 'pointer')
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                            <span>{result.option}</span>
+                            {(post.user_response !== null && post.user_response !== undefined) && (
+                              <span style={{ fontSize: 12, fontWeight: 700 }}>
+                                {result.vote_count} • {result.percentage}%
+                              </span>
+                            )}
+                          </div>
+                          {(post.user_response !== null && post.user_response !== undefined) && (
+                            <div style={{ height: 8, borderRadius: 999, background: '#e2e8f0', overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  width: `${result.percentage}%`,
+                                  height: '100%',
+                                  background: post.user_response === result.option_index ? '#f97316' : '#94a3b8',
+                                  borderRadius: 999
+                                }}
+                              />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {post.category === 'poll' && (
+                    <div style={{ marginTop: 14, fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+                      {post.user_response !== null && post.user_response !== undefined
+                        ? 'Your vote has been recorded.'
+                        : 'Tap an option to vote.'}
+                    </div>
+                  )}
+
+                  {post.category === 'assignment' && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+                      {post.sections && (
+                        <span className="st-banner-pill" style={{ background: '#fff7ed', color: '#ea580c' }}>{post.sections}</span>
+                      )}
+                      {post.attachment_url && (
+                        <span className="st-banner-pill" style={{ background: '#eff6ff', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Paperclip size={12} />
+                          Attachment
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {post.event_registration_url && (
+                    <a
+                      href={post.event_registration_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="st-card-action-btn"
+                    >
+                      <span>Register Now</span>
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </main>
 
         <StudentDock active="feed" />
 
-        {/* Drawer V2 */}
         {isDrawerOpen && <div className="st-drawer-overlay-v2" onClick={() => setIsDrawerOpen(false)} />}
         <aside className={`st-drawer-v2 ${isDrawerOpen ? 'open' : ''}`}>
           <div className="st-drawer-top">

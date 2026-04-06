@@ -299,7 +299,7 @@ const LandingPage = () => {
           </div>
           <Link to="/changelog" className="lp-version-badge">
             <span className="lp-version-dot" />
-            alpha-0.58.8
+            alpha-0.62.1
           </Link>
         </div>
       </footer>

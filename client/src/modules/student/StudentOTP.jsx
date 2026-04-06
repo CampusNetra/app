@@ -9,16 +9,20 @@ const StudentOTP = () => {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
+  const [maskedEmail, setMaskedEmail] = useState('su****@uni.edu');
 
-  const maskedEmail = useMemo(() => {
-    const payload = sessionStorage.getItem('student_login_payload');
-    if (!payload) return 'su****@uni.edu';
-    try {
-      return JSON.parse(payload).maskedEmail || 'su****@uni.edu';
-    } catch (error) {
-      return 'su****@uni.edu';
+  useEffect(() => {
+    const payload = localStorage.getItem('student_login_payload');
+    if (!payload) {
+      navigate('/student/welcome');
+      return;
     }
-  }, []);
+    try {
+      setMaskedEmail(JSON.parse(payload).maskedEmail || 'su****@uni.edu');
+    } catch (error) {
+      setMaskedEmail('su****@uni.edu');
+    }
+  }, [navigate]);
 
   const handleOtpChange = (index, value) => {
     const clean = value.replace(/\D/g, '').slice(-1);
