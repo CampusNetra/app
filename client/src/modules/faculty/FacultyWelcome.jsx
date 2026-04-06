@@ -169,7 +169,7 @@ const FacultyWelcome = () => {
                 boxShadow: '0 4px 15px rgba(217, 45, 32, 0.1)'
              }}>
                 <div style={{ width: 6, height: 6, background: '#d92d20', borderRadius: '50%', boxShadow: '0 0 10px #d92d20', animation: 'lp-pulse 2s infinite' }} />
-                ALPHA-0.58.6
+                ALPHA-0.62.1
              </div>
           </div>
         </main>
