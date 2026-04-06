@@ -19,6 +19,10 @@ router.get('/targets', facultyController.getTargets);
 router.post('/assignments', assignmentController.createAssignment);
 router.get('/assignments', assignmentController.getMyAssignments);
 
+// Announcements
+router.post('/announcements', announcementController.createAnnouncement);
+router.get('/announcements', announcementController.getMyAnnouncements);
+
 // Polls
 router.get('/polls', pollController.getMyPolls);
 router.post('/polls', pollController.createPoll);

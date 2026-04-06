@@ -39,6 +39,13 @@ const Login = () => {
 
     try {
       const res = await api.post("/auth/login", formData);
+      
+      // Sanitize other sessions to prevent role-conflicts
+      localStorage.removeItem('student_token');
+      localStorage.removeItem('student_user');
+      localStorage.removeItem('faculty_token');
+      localStorage.removeItem('faculty_user');
+
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       navigate("/admin/welcome");

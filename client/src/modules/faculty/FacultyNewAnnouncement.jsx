@@ -61,7 +61,7 @@ const FacultyNewAnnouncement = () => {
     setError('');
 
     try {
-      await api.post('/announcements', {
+      await api.post('/faculty/announcements', {
         title: formData.title,
         content: formData.content,
         type: formData.type,
@@ -172,16 +172,20 @@ const FacultyNewAnnouncement = () => {
             <div className="space-y-2">
               <label className="text-[13px] font-black text-slate-500 uppercase tracking-widest pl-1">Priority Level</label>
               <div className="flex bg-slate-50/50 p-1.5 rounded-2xl border border-slate-100">
-                {['normal', 'important', 'serious'].map(level => (
+                {[
+                  { label: 'Normal', value: 'normal' },
+                  { label: 'Important', value: 'important' },
+                  { label: 'Event', value: 'event' }
+                ].map((level) => (
                    <button
-                     key={level}
+                     key={level.value}
                      type="button"
-                     onClick={() => setFormData({...formData, type: level})}
+                     onClick={() => setFormData({...formData, type: level.value})}
                      className={`flex-1 py-3.5 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${
-                       formData.type === level ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'
+                       formData.type === level.value ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'
                      }`}
                    >
-                     {level}
+                     {level.label}
                    </button>
                 ))}
               </div>

@@ -9,9 +9,9 @@ const StudentSplash = () => {
   const [studentName, setStudentName] = useState('Student');
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('student_user');
+    const stored = localStorage.getItem('student_user');
     if (!stored) {
-      navigate('/student/login', { replace: true });
+      navigate('/student/welcome', { replace: true });
       return;
     }
 

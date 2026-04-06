@@ -52,6 +52,7 @@ import FacultyUploadMaterial from './modules/faculty/FacultyUploadMaterial';
 import FacultySubjects from './modules/faculty/FacultySubjects';
 import FacultyMessages from './modules/faculty/FacultyMessages';
 import FacultyChatWindow from './modules/faculty/FacultyChatWindow';
+import FacultyProfile from './modules/faculty/FacultyProfile';
 
 const ProtectedRoute = () => {
   const token = localStorage.getItem('token');
@@ -93,6 +94,7 @@ function App() {
           <Route path="/faculty/subjects" element={<FacultySubjects />} />
           <Route path="/faculty/messages" element={<FacultyMessages />} />
           <Route path="/faculty/messages/:channelId" element={<FacultyChatWindow />} />
+          <Route path="/faculty/profile" element={<FacultyProfile />} />
         </Route>
 
         <Route path="/student/splash" element={<StudentSplash />} />

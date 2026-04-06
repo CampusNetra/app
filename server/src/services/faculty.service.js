@@ -84,8 +84,17 @@ const getFacultySubjects = async (faculty_id) => {
         sec.name as section_name,
         t.name as term_name,
         c.id as channel_id,
+        c.name as channel_name,
         so.created_at,
-        (SELECT COUNT(*) FROM users u WHERE u.section_id = sec.id AND u.role = 'student') as student_count
+        (SELECT COUNT(*) FROM users u WHERE u.section_id = sec.id AND u.role = 'student') as student_count,
+        (SELECT COUNT(*) FROM channel_members cm WHERE cm.channel_id = c.id) as member_count,
+        (SELECT COUNT(*) FROM messages m WHERE m.channel_id = c.id AND m.parent_id IS NULL) as message_count,
+        (
+          SELECT COUNT(*)
+          FROM assignment_targets at
+          JOIN assignments a ON a.id = at.assignment_id
+          WHERE at.subject_offering_id = so.id AND a.is_active = 1
+        ) as assignment_count
       FROM subject_offerings so
       JOIN subjects s ON s.id = so.subject_id
       JOIN sections sec ON sec.id = so.section_id
