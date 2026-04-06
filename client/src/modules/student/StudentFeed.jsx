@@ -60,22 +60,22 @@ const StudentFeed = () => {
   ];
 
   const handleLogout = () => {
-    // Clear session storage
-    sessionStorage.removeItem('student_token');
-    sessionStorage.removeItem('student_user');
+    // Clear local storage
+    localStorage.removeItem('student_token');
+    localStorage.removeItem('student_user');
     
-    // Clear persistent login cache to prevent auto-login loop
+    // Clear persistent login cache
     localStorage.removeItem('student_login');
     
     navigate('/student/welcome', { replace: true });
   };
 
   useEffect(() => {
-    const studentUser = JSON.parse(sessionStorage.getItem('student_user') || '{}');
+    const studentUser = JSON.parse(localStorage.getItem('student_user') || '{}');
     setUser(studentUser);
 
     const loadFeed = async () => {
-      const token = sessionStorage.getItem('student_token');
+      const token = localStorage.getItem('student_token');
       if (!token) {
         navigate('/student/welcome', { replace: true });
         return;

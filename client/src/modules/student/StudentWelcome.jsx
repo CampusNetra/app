@@ -30,6 +30,12 @@ const StudentWelcome = () => {
       });
 
       const { token, user } = res.data;
+      
+      // Sanitize other sessions to prevent role-conflicts
+      localStorage.removeItem('faculty_token');
+      localStorage.removeItem('faculty_user');
+      localStorage.removeItem('token');
+
       localStorage.setItem('student_token', token);
       localStorage.setItem('student_user', JSON.stringify(user));
       

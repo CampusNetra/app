@@ -30,10 +30,16 @@ const FacultyWelcome = () => {
       });
 
       const { token, user } = res.data;
+      
+      // Sanitize other sessions to prevent role-conflicts
+      localStorage.removeItem('student_token');
+      localStorage.removeItem('student_user');
+      localStorage.removeItem('token');
+      
       localStorage.setItem('faculty_token', token);
       localStorage.setItem('faculty_user', JSON.stringify(user));
       
-      // Navigate to faculty dashboard (to be created)
+      // Navigate to faculty dashboard
       navigate('/faculty/dashboard');
     } catch (err) {
       if (err.response?.data?.error?.includes('activated') || err.response?.data?.error?.includes('password')) {

@@ -36,7 +36,7 @@ const ChatList = ({ onSelectChannel }) => {
     fetchChannels();
     
     // Set up real-time updates for the list
-    const token = sessionStorage.getItem('student_token') || localStorage.getItem('token');
+    const token = localStorage.getItem('student_token') || localStorage.getItem('token');
     if (token) {
       const socket = io(resolveSocketUrl(), {
         auth: { token },

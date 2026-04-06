@@ -1,49 +1,34 @@
-POST
-	https://app.srisumit96-1ca.workers.dev/api/admin/subjects/1/create-channels
-Status
-500
-VersionHTTP/3
-Transferred811 B (79 B size)
-Referrer Policystrict-origin-when-cross-origin
-Request PriorityHighest
-DNS ResolutionSystem
+Uncaught DOMException: The operation is insecure.
+    push router.js:388
+    useNavigateUnstable index.js:245
+    StudentWelcome StudentWelcome.jsx:17
+    React 8
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
+    require_scheduler_development scheduler.development.js:571
+    require_scheduler_development react-dom-DoAJ_auL.js:394
+    __commonJSMin chunk-BoAXSpZd.js:8
+    require_scheduler index.js:6
+    __commonJSMin chunk-BoAXSpZd.js:8
+    require_react_dom_development React
+    require_react_dom_development react-dom-DoAJ_auL.js:17253
+    __commonJSMin chunk-BoAXSpZd.js:8
+    require_react_dom React
+    __commonJSMin chunk-BoAXSpZd.js:8
+    require_client React
+    __commonJSMin chunk-BoAXSpZd.js:8
+    <anonymous> react-dom_client.js:25
+router.js:388:7
 
-{"error":"D1_TYPE_ERROR: Type 'undefined' not supported for value 'undefined'"}
+The above error occurred in the <StudentWelcome> component:
 
+StudentWelcome@http://localhost:5173/src/modules/student/StudentWelcome.jsx?t=1775464592478:24:19
+RenderedRoute@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=a30e33d0:3332:42
+Routes@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=a30e33d0:3775:31
+Router@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=a30e33d0:3723:158
+BrowserRouter@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=a30e33d0:4402:47
+App
 
-Error: Promised response from onMessage listener went out of scope 2 background.js:505:27
-XHR
-POST
-https://app.srisumit96-1ca.workers.dev/api/admin/subjects/1/create-channels
-[HTTP/3 500  1112ms]
-
-Error creating subject channels: AxiosError: Request failed with status code 500
-    bp https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:622
-    Sp https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:624
-    z https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:624
-    tb https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:624
-    tb https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:624
-    Sm https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:626
-    promise callback*_request https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:627
-    request https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:626
-    l https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:627
-    up https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:622
-    ke https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:642
-    Yp https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    Xp https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    Zp https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    ru https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    au https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    Gi https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    Ko https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:40
-    ud https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    Gi https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    zi https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    xf https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    lu https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    qi https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    Fr https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    Fr https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:37
-    createRoot https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:40
-    <anonymous> https://app.srisumit96-1ca.workers.dev/assets/index-U60qIXS7.js:648
-<anonymous code>:1:147461
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. 2 <anonymous code>:1:147461

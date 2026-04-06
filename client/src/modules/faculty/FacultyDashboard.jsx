@@ -31,13 +31,10 @@ const FacultyDashboard = () => {
 
   const fetchDashboard = async () => {
     try {
-      const res = await api.get('/faculty/dashboard', {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('faculty_token')}` }
-      });
+      const res = await api.get('/faculty/dashboard');
       setData(res.data);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
-      if (err.response?.status === 401) navigate('/faculty/login');
     } finally {
       setLoading(false);
     }

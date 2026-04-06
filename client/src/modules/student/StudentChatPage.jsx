@@ -45,7 +45,8 @@ const StudentChatPage = () => {
     setActiveChannel(null);
   };
 
-  const studentUser = JSON.parse(sessionStorage.getItem('student_user') || '{}');
+  const token = localStorage.getItem('student_token') || localStorage.getItem('token');
+  const studentUser = JSON.parse(localStorage.getItem('student_user') || '{}');
 
   return (
     <div className="st-shell">

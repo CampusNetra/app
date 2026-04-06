@@ -64,7 +64,7 @@ const ChatWindow = ({ channel, user, onBack }) => {
   const ensureSocketConnected = () => {
     if (socketRef.current) return socketRef.current;
 
-    const token = sessionStorage.getItem('student_token') || localStorage.getItem('token');
+    const token = localStorage.getItem('student_token') || localStorage.getItem('token');
     if (!token) return null;
 
     const socket = io(resolveSocketUrl(), {
