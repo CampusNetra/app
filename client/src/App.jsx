@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import Login from './modules/admin/Login';
 import Signup from './modules/admin/Signup';
 import AdminLayout from './modules/admin/components/AdminLayout';
+import ScrollToTop from './components/ScrollToTop';
 import Dashboard from './modules/admin/Dashboard';
 import TermsPage from './modules/admin/TermsPage';
 import Welcome from './modules/admin/Welcome';
@@ -75,6 +76,7 @@ const FacultyRoute = () => {
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/admin/login" element={<Login />} />
