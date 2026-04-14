@@ -39,6 +39,7 @@ import StudentEventsPage from './modules/student/StudentEventsPage';
 import StudentChatPage from './modules/student/StudentChatPage';
 import StudentProfilePage from './modules/student/StudentProfilePage';
 import StudentEventDetailsPage from './modules/student/StudentEventDetailsPage';
+import StudentLayout from './modules/student/components/StudentLayout';
 import FacultyWelcome from './modules/faculty/FacultyWelcome';
 import FacultySignup from './modules/faculty/FacultySignup';
 import FacultyDashboard from './modules/faculty/FacultyDashboard';
@@ -104,15 +105,17 @@ function App() {
         <Route path="/student/signup" element={<StudentSignup />} />
         <Route path="/student/verify" element={<StudentOTP />} />
         <Route element={<StudentRoute />}>
-          <Route path="/student/feed" element={<StudentFeed />} />
-          <Route path="/student/alerts" element={<StudentAlertsPage />} />
-          <Route path="/student/announcements" element={<StudentAnnouncementsPage />} />
-          <Route path="/student/clubs" element={<StudentClubsPage />} />
-          <Route path="/student/marketplace" element={<StudentMarketplacePage />} />
-          <Route path="/student/events" element={<StudentEventsPage />} />
-          <Route path="/student/events/:eventId" element={<StudentEventDetailsPage />} />
-          <Route path="/student/chat" element={<StudentChatPage />} />
-          <Route path="/student/profile" element={<StudentProfilePage />} />
+          <Route element={<StudentLayout />}>
+            <Route path="/student/feed" element={<StudentFeed />} />
+            <Route path="/student/alerts" element={<StudentAlertsPage />} />
+            <Route path="/student/announcements" element={<StudentAnnouncementsPage />} />
+            <Route path="/student/clubs" element={<StudentClubsPage />} />
+            <Route path="/student/marketplace" element={<StudentMarketplacePage />} />
+            <Route path="/student/events" element={<StudentEventsPage />} />
+            <Route path="/student/events/:eventId" element={<StudentEventDetailsPage />} />
+            <Route path="/student/chat" element={<StudentChatPage />} />
+            <Route path="/student/profile" element={<StudentProfilePage />} />
+          </Route>
         </Route>
         <Route path="/student" element={<Navigate to="/student/welcome" replace />} />
         
