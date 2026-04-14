@@ -21,13 +21,6 @@ const StudentTopBar = ({ searchTerm, onSearchChange }) => {
           <Bell size={20} />
           <span className="dot"></span>
         </button>
-        <button className="st-topbar-btn">
-          <Settings size={20} />
-        </button>
-        <button className="st-create-post-btn">
-          <Plus size={18} />
-          <span>Create Post</span>
-        </button>
       </div>
     </header>
   );
