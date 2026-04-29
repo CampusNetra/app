@@ -5,7 +5,6 @@ import {
   Clock,
   ArrowLeft,
   ChevronRight,
-  Filter,
   LayoutGrid,
   Rows,
   ChevronLeft
@@ -30,6 +29,13 @@ const StudentEventsPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('strip'); // 'strip' | 'month'
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Generate 7 days for the calendar strip
   const dateStrip = useMemo(() => {
@@ -51,16 +57,23 @@ const StudentEventsPage = () => {
     const lastDay = new Date(year, month + 1, 0);
     
     const days = [];
-    // Padding for first week
     const firstDayIdx = firstDay.getDay(); 
-    for (let i = 0; i < firstDayIdx; i++) {
-      const d = new Date(year, month, i - firstDayIdx + 1);
+    
+    // Padding from prev month
+    for (let i = firstDayIdx; i > 0; i--) {
+      const d = new Date(year, month, 1 - i);
       days.push({ date: d, otherMonth: true });
     }
     
     // Days in current month
     for (let i = 1; i <= lastDay.getDate(); i++) {
         days.push({ date: new Date(year, month, i), otherMonth: false });
+    }
+
+    // Padding for next month to fill grid
+    const remaining = 42 - days.length; // 6 rows of 7
+    for (let i = 1; i <= remaining; i++) {
+        days.push({ date: new Date(year, month + 1, i), otherMonth: true });
     }
     
     return days;
@@ -98,149 +111,163 @@ const StudentEventsPage = () => {
   };
 
   return (
-    <div className="st-shell">
-      <div className="st-mobile-frame feed-v2">
-        <header className="st-feed-header-v2">
+    <div className={isDesktop ? 'st-events-desktop-container' : 'st-mobile-frame feed-v2'}>
+      <header className={isDesktop ? 'st-page-title-row' : 'st-feed-header-v2'}>
           <div className="st-header-content">
-            <button className="st-action-circle" onClick={() => navigate('/student/feed')}>
-              <ArrowLeft size={20} />
-            </button>
-            <div className="st-profile-meta" style={{ textAlign: 'center', flex: 1 }}>
-              <h2 style={{ fontSize: '18px' }}>Event Calendar</h2>
-              <p>Discover campus activities</p>
+            {!isDesktop && (
+              <button className="st-action-circle" onClick={() => navigate('/student/feed')}>
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <div className="st-profile-meta" style={!isDesktop ? { textAlign: 'center', flex: 1} : {}}>
+              <h2 style={{ fontSize: isDesktop ? '24px' : '18px', fontWeight: 800 }}>Event Calendar</h2>
+              {!isDesktop && <p>Discover campus activities</p>}
             </div>
             
             <div className="st-view-toggle">
               <button 
                 className={`st-toggle-btn ${viewMode === 'strip' ? 'active' : ''}`}
                 onClick={() => setViewMode('strip')}
+                title="Week view"
               >
-                <Rows size={16} />
+                <Rows size={18} />
               </button>
               <button 
                 className={`st-toggle-btn ${viewMode === 'month' ? 'active' : ''}`}
                 onClick={() => setViewMode('month')}
+                title="Month view"
               >
-                <LayoutGrid size={16} />
+                <LayoutGrid size={18} />
               </button>
             </div>
           </div>
         </header>
 
-        {/* Date Views */}
-        {viewMode === 'strip' ? (
-          <div className="st-calendar-strip custom-scrollbar-hide">
-            {dateStrip.map((date, idx) => {
-              const isActive = date.toDateString() === selectedDate.toDateString();
-              const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-              const dayNum = date.getDate();
-              const hasEvent = events.some(e => e.event_date && new Date(e.event_date).toDateString() === date.toDateString());
-              
-              return (
-                <div 
-                  key={idx} 
-                  className={`st-date-card ${isActive ? 'active' : ''}`}
-                  onClick={() => setSelectedDate(date)}
-                >
-                  <span className="st-date-day">{dayName}</span>
-                  <span className="st-date-num">{dayNum}</span>
-                  {hasEvent && <div className="st-date-dot" />}
+        <section className="st-calendar-section">
+          {viewMode === 'strip' ? (
+            <div className="st-calendar-strip-container">
+               <div className="st-calendar-strip scroll-x custom-scrollbar-hide">
+                {dateStrip.map((date, idx) => {
+                  const isActive = date.toDateString() === selectedDate.toDateString();
+                  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                  const dayNum = date.getDate();
+                  const hasEvent = events.some(e => e.event_date && new Date(e.event_date).toDateString() === date.toDateString());
+                  
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`st-date-card ${isActive ? 'active' : ''}`}
+                      onClick={() => setSelectedDate(date)}
+                    >
+                      <span className="st-date-day">{dayName}</span>
+                      <span className="st-date-num">{dayNum}</span>
+                      {hasEvent && <div className="st-date-dot" />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="st-month-calendar">
+                <div className="st-month-header">
+                    <div className="st-month-title-group">
+                      <h3 className="st-month-label">{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h3>
+                      <div className="st-month-nav">
+                          <button className="st-month-nav-btn" onClick={() => changeMonth(-1)}>
+                              <ChevronLeft size={18} />
+                          </button>
+                          <button className="st-month-nav-btn" onClick={() => changeMonth(1)}>
+                              <ChevronRight size={18} />
+                          </button>
+                      </div>
+                    </div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="st-month-calendar">
-              <div className="st-month-header">
-                  <h3>{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h3>
-                  <div className="st-month-nav">
-                      <button className="st-action-circle" style={{ width: 32, height: 32 }} onClick={() => changeMonth(-1)}>
-                          <ChevronLeft size={16} />
-                      </button>
-                      <button className="st-action-circle" style={{ width: 32, height: 32 }} onClick={() => changeMonth(1)}>
-                          <ChevronRight size={16} />
-                      </button>
-                  </div>
-              </div>
-              <div className="st-calendar-grid">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="st-day-label">{d}</div>)}
-                  {monthGrid.map((day, idx) => {
-                      const isActive = day.date.toDateString() === selectedDate.toDateString();
-                      const isToday = day.date.toDateString() === new Date().toDateString();
-                      const hasEvent = events.some(e => e.event_date && new Date(e.event_date).toDateString() === day.date.toDateString());
-                      
-                      return (
-                          <div 
-                              key={idx} 
-                              className={`st-day-cell ${day.otherMonth ? 'other-month' : ''} ${isActive ? 'selected' : ''} ${isToday ? 'today' : ''}`}
-                              onClick={() => {
-                                  setSelectedDate(day.date);
-                                  if (day.otherMonth) setCurrentMonth(day.date);
-                              }}
-                          >
-                            {day.date.getDate()}
-                            {hasEvent && <div className="st-cell-dot" />}
-                          </div>
-                      );
-                  })}
-              </div>
-          </div>
-        )}
+                <div className="st-calendar-grid">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="st-day-label">{d}</div>)}
+                    {monthGrid.map((day, idx) => {
+                        const isActive = day.date.toDateString() === selectedDate.toDateString();
+                        const isToday = day.date.toDateString() === new Date().toDateString();
+                        const hasEvent = events.some(e => e.event_date && new Date(e.event_date).toDateString() === day.date.toDateString());
+                        
+                        return (
+                            <div 
+                                key={idx} 
+                                className={`st-day-cell ${day.otherMonth ? 'other-month' : ''} ${isActive ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+                                onClick={() => {
+                                    setSelectedDate(day.date);
+                                    if (day.otherMonth) {
+                                      setCurrentMonth(day.date);
+                                    }
+                                }}
+                            >
+                              <span className="cell-num">{day.date.getDate()}</span>
+                              {hasEvent && <div className="st-cell-dot" />}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+          )}
+        </section>
 
-        <main className="st-feed-main custom-scrollbar">
-          <div style={{ padding: '24px 20px 12px' }}>
-             <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Schedule for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric'})}</h3>
+        <main className="st-events-content">
+          <div className="st-schedule-header">
+             <h3>Schedule for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric'})}</h3>
+             {filteredEventsByDate.length > 0 && <span className="event-count">{filteredEventsByDate.length} Campus Events</span>}
           </div>
 
           {isLoading && (
             <div className="st-loading-state">
-              <div className="shimmer-card" style={{ height: '80px' }}></div>
-              <div className="shimmer-card" style={{ height: '80px' }}></div>
+              <div className="shimmer-card" style={{ height: '80px', borderRadius: '16px' }}></div>
+              <div className="shimmer-card" style={{ height: '80px', borderRadius: '16px' }}></div>
             </div>
           )}
 
           {!isLoading && filteredEventsByDate.length === 0 && (
-            <div className="st-empty-state" style={{ padding: '40px 24px' }}>
-              <div className="empty-icon-wrap" style={{ width: '60px', height: '60px', background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <Clock size={24} style={{ color: '#94a3b8' }} />
+            <div className="st-empty-state-v2">
+              <div className="empty-icon-wrap">
+                <Clock size={32} />
               </div>
-              <h3 style={{ fontSize: '16px' }}>No events today</h3>
-              <p style={{ fontSize: '13px' }}>Select another date or check back later.</p>
+              <h3>No events today</h3>
+              <p>Select another date or discovered campus activities later.</p>
             </div>
           )}
 
-          {!isLoading && filteredEventsByDate.map((event) => {
-            const { main, period } = formatTimeMini(event.event_date);
-            return (
-              <div 
-                key={event.id} 
-                className="st-event-row"
-                onClick={() => navigate(`/student/events/${event.id}`)}
-              >
-                <div className="st-event-time-col">
-                  <span className="st-event-time-main">{main}</span>
-                  <span className="st-event-time-period">{period}</span>
-                </div>
-                <div className="st-event-info-col">
-                  <h4 className="st-event-title-mini">{event.title}</h4>
-                  <div className="st-event-loc-mini">
-                    <MapPin size={12} />
-                    <span>{event.event_location || 'Campus'}</span>
+          <div className="st-events-list">
+            {!isLoading && filteredEventsByDate.map((event) => {
+              const { main, period } = formatTimeMini(event.event_date);
+              return (
+                <div 
+                  key={event.id} 
+                  className="st-event-card-modern"
+                  onClick={() => navigate(`/student/events/${event.id}`)}
+                >
+                  <div className="st-event-time-col">
+                    <span className="time-val">{main}</span>
+                    <span className="time-suffix">{period}</span>
+                  </div>
+                  <div className="st-event-main-col">
+                    <h4 className="title">{event.title}</h4>
+                    <div className="meta">
+                      <div className="meta-item"><MapPin size={12} /> {event.event_location || 'Campus'}</div>
+                      {event.source && <div className="meta-item"><Calendar size={12} /> {event.source}</div>}
+                    </div>
+                  </div>
+                  <div className="st-event-action-col">
+                    <ChevronRight size={20} />
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: '#cbd5e1' }} />
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
           
-          <div style={{ padding: '40px 20px' }}>
-             <p style={{ textAlign: 'center', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>All times are in IST (Local Time)</p>
+          <div className="st-timezone-info">
+             <p>All times are in IST (Local Time)</p>
           </div>
         </main>
 
-        <StudentDock active="events" />
+        {!isDesktop && <StudentDock active="events" />}
       </div>
-    </div>
   );
 };
 

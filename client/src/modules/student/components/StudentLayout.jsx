@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import StudentSidebar from './StudentSidebar';
 import StudentTopBar from './StudentTopBar';
-import StudentRightPanel from './StudentRightPanel';
 import StudentDock from '../StudentDock';
 import '../student.css';
 
@@ -47,9 +46,6 @@ const StudentLayout = () => {
              {/* Pass searchTerm to Outlet context if needed, or handle it via local storage/state management */}
             <Outlet context={{ searchTerm, setSearchTerm }} />
           </main>
-
-          {/* Desktop Right Panel */}
-          {!isMobile && <StudentRightPanel />}
         </div>
 
         {/* Mobile Bottom Dock */}
